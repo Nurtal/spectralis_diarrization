@@ -1,0 +1,7 @@
+name: nmf_3spk_ovl00_10db
+seed: 0
+model:
+  name: nmf
+  params:
+dataset:
+  manifest: data/benchmarks/matrix_v1/3spk_ovl00_10db/manifest.json

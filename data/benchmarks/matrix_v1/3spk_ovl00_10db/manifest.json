@@ -1,0 +1,159 @@
+{
+  "version": "synthetic-v1_seed55923",
+  "sample_rate": 16000,
+  "seed": 55923,
+  "mixtures": [
+    {
+      "id": "mix_0000",
+      "mixture": "mix_0000/mixture.wav",
+      "sources": [
+        "mix_0000/source_0.wav",
+        "mix_0000/source_1.wav",
+        "mix_0000/source_2.wav"
+      ],
+      "source_speakers": [
+        "1221",
+        "6829",
+        "7729"
+      ],
+      "segments": [
+        {
+          "start": 0.0,
+          "end": 8.0,
+          "speaker": "1221"
+        },
+        {
+          "start": 3.0549999999999997,
+          "end": 8.0,
+          "speaker": "6829"
+        },
+        {
+          "start": 0.0,
+          "end": 8.0,
+          "speaker": "7729"
+        }
+      ],
+      "metadata": {
+        "num_speakers": 3,
+        "overlap_ratio": 0.0,
+        "snr_db": 10.0,
+        "duration_seconds": 8.0,
+        "reverb": null
+      }
+    },
+    {
+      "id": "mix_0001",
+      "mixture": "mix_0001/mixture.wav",
+      "sources": [
+        "mix_0001/source_0.wav",
+        "mix_0001/source_1.wav",
+        "mix_0001/source_2.wav"
+      ],
+      "source_speakers": [
+        "2094",
+        "2300",
+        "6829"
+      ],
+      "segments": [
+        {
+          "start": 0.0,
+          "end": 3.575,
+          "speaker": "2094"
+        },
+        {
+          "start": 0.0,
+          "end": 8.0,
+          "speaker": "2300"
+        },
+        {
+          "start": 3.26,
+          "end": 8.0,
+          "speaker": "6829"
+        }
+      ],
+      "metadata": {
+        "num_speakers": 3,
+        "overlap_ratio": 0.0,
+        "snr_db": 10.0,
+        "duration_seconds": 8.0,
+        "reverb": null
+      }
+    },
+    {
+      "id": "mix_0002",
+      "mixture": "mix_0002/mixture.wav",
+      "sources": [
+        "mix_0002/source_0.wav",
+        "mix_0002/source_1.wav",
+        "mix_0002/source_2.wav"
+      ],
+      "source_speakers": [
+        "4446",
+        "4507",
+        "7729"
+      ],
+      "segments": [
+        {
+          "start": 0.0,
+          "end": 2.1,
+          "speaker": "4446"
+        },
+        {
+          "start": 2.1,
+          "end": 4.6899999999999995,
+          "speaker": "4507"
+        },
+        {
+          "start": 0.0,
+          "end": 8.0,
+          "speaker": "7729"
+        }
+      ],
+      "metadata": {
+        "num_speakers": 3,
+        "overlap_ratio": 0.0,
+        "snr_db": 10.0,
+        "duration_seconds": 8.0,
+        "reverb": null
+      }
+    },
+    {
+      "id": "mix_0003",
+      "mixture": "mix_0003/mixture.wav",
+      "sources": [
+        "mix_0003/source_0.wav",
+        "mix_0003/source_1.wav",
+        "mix_0003/source_2.wav"
+      ],
+      "source_speakers": [
+        "3729",
+        "4446",
+        "7021"
+      ],
+      "segments": [
+        {
+          "start": 0.0,
+          "end": 8.0,
+          "speaker": "3729"
+        },
+        {
+          "start": 3.245,
+          "end": 8.0,
+          "speaker": "4446"
+        },
+        {
+          "start": 1.5350000000000001,
+          "end": 8.0,
+          "speaker": "7021"
+        }
+      ],
+      "metadata": {
+        "num_speakers": 3,
+        "overlap_ratio": 0.0,
+        "snr_db": 10.0,
+        "duration_seconds": 8.0,
+        "reverb": null
+      }
+    }
+  ]
+}

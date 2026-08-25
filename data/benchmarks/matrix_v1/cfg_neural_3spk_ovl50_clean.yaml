@@ -1,0 +1,7 @@
+name: neural_3spk_ovl50_clean
+seed: 0
+model:
+  name: sepformer3
+  params:
+dataset:
+  manifest: data/benchmarks/matrix_v1/3spk_ovl50_clean/manifest.json

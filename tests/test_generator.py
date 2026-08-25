@@ -227,3 +227,50 @@ class TestGenerateDataset:
         )
         for seg in result.segments:
             assert 0.0 <= seg.start < seg.end <= 5.0 + 1e-6
+
+
+class TestReverb:
+    def _corpus(self, tmp_path):
+        d = tmp_path / "s1"
+        d.mkdir(parents=True)
+        t = np.arange(int(1.0 * SR)) / SR
+        save_audio(d / "u0.wav", (0.3 * np.sin(2 * np.pi * 300 * t)).astype(np.float32), SR)
+        return index_clips(tmp_path)
+
+    def test_reverb_changes_the_mixture_deterministically(self, tmp_path):
+        clips = self._corpus(tmp_path)
+        kwargs = dict(num_speakers=1, duration=2.0, overlap_ratio=0.0, snr_db=None)
+        clean = generate_mixture(clips, seed=5, **kwargs)
+        wet_a = generate_mixture(clips, seed=5, reverb={"rt60": 0.4}, **kwargs)
+        wet_b = generate_mixture(clips, seed=5, reverb={"rt60": 0.4}, **kwargs)
+
+        assert not np.array_equal(clean.mixture, wet_a.mixture)
+        np.testing.assert_array_equal(wet_a.mixture, wet_b.mixture)
+        # ground truth sources are the reverberant signals (metrics compare
+        # against what is physically present in the mixture)
+        assert not np.array_equal(clean.sources[0], wet_a.sources[0])
+
+    def test_higher_rt60_gives_longer_tails(self, tmp_path):
+        clips = self._corpus(tmp_path)
+        kwargs = dict(num_speakers=1, duration=3.0, overlap_ratio=0.0, snr_db=None, seed=2)
+        dry = generate_mixture(clips, **kwargs).sources[0]
+        small = generate_mixture(clips, reverb={"rt60": 0.2}, **kwargs).sources[0]
+        big = generate_mixture(clips, reverb={"rt60": 0.8}, **kwargs).sources[0]
+
+        def late_energy(x):
+            # after the 1 s clip ends: dry -> 0, small reverb decays faster
+            late = x[int(1.15 * SR):int(1.6 * SR)]
+            return float(np.sum(late**2))
+
+        assert late_energy(big) > late_energy(small) > late_energy(dry) >= 0.0
+
+    def test_metadata_records_reverb(self, clips_dir, tmp_path):
+        path = generate_dataset(
+            clips_dir, output_dir=tmp_path / "rv", num_mixtures=1, durations=[3.0],
+            speaker_counts=[2], overlap_ratios=[0.25], snr_values=[None],
+            seed=13, reverb={"rt60": 0.35},
+        )
+        import json
+
+        entry = json.loads(path.read_text())["mixtures"][0]
+        assert entry["metadata"]["reverb"] == {"rt60": 0.35}

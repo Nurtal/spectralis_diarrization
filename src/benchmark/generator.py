@@ -116,7 +116,37 @@ def _place(durations, overlap_ratio):
     return starts
 
 
-def generate_mixture(clips, num_speakers, duration, overlap_ratio, snr_db=None, seed=0):
+def synthetic_rir(sample_rate, rt60=0.4, seed=0):
+    """Deterministic exponential-decay noise RIR for a target RT60.
+
+    Simple room simulation: a strong direct tap followed by exponentially
+    decaying diffuse noise. Not a physical model, but sufficient to study
+    robustness of separation approaches to reverberation.
+    """
+    rng = np.random.default_rng(seed)
+    n = max(int(rt60 * sample_rate), 2)
+    t = np.arange(n) / sample_rate
+    decay = np.exp(-6.9 * t / rt60)  # -60 dB at t = rt60
+    ir = rng.normal(0.0, 1.0, size=n) * decay
+    ir[0] += 5.0  # dominant direct path
+    norm = np.linalg.norm(ir)
+    return (ir / norm).astype(np.float32)
+
+
+def _reverberate(audio, sample_rate, reverb, seed):
+    from scipy.signal import fftconvolve
+
+    rir = synthetic_rir(sample_rate, rt60=reverb["rt60"], seed=seed)
+    # keep the full reverb tail: it bleeds past the clip end on purpose
+    wet = fftconvolve(audio, rir).astype(np.float32)
+    peak = np.abs(wet).max()
+    if peak > 1.0:
+        wet /= peak
+    return wet
+
+
+def generate_mixture(clips, num_speakers, duration, overlap_ratio, snr_db=None, seed=0,
+                     reverb=None):
     """Generate one mixture. Returns a MixtureResult with exact ground truth."""
     rng = np.random.default_rng(seed)
     chosen = _pick(list(clips), num_speakers, rng)
@@ -142,6 +172,9 @@ def generate_mixture(clips, num_speakers, duration, overlap_ratio, snr_db=None, 
     sources = []
     segments = []
     for clip, audio, start in zip(chosen, loaded, starts):
+        if reverb is not None:
+            audio = _reverberate(audio, chosen[0].sample_rate, reverb,
+                                 seed=int(rng.integers(2**31)))
         buf = np.zeros(total_samples, dtype=np.float32)
         i0 = int(start * chosen[0].sample_rate)
         i1 = min(i0 + len(audio), total_samples)
@@ -196,6 +229,7 @@ def generate_dataset(
     snr_values,
     seed,
     version=None,
+    reverb=None,
 ):
     """Generate a full benchmark dataset and its manifest.json.
 
@@ -230,6 +264,7 @@ def generate_dataset(
             overlap_ratio=overlap,
             snr_db=snr,
             seed=int(rng.integers(2**31)),
+            reverb=reverb,
         )
 
         mix_dir = output_dir / f"mix_{i:04d}"
@@ -258,6 +293,7 @@ def generate_dataset(
                     "overlap_ratio": overlap,
                     "snr_db": snr,
                     "duration_seconds": duration,
+                    "reverb": reverb,
                 },
             }
         )

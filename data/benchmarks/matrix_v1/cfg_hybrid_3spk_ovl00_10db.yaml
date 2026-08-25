@@ -1,0 +1,10 @@
+name: hybrid_3spk_ovl00_10db
+seed: 0
+model:
+  name: hybrid
+  params:
+      diarizer: "oracle"
+      separator: "nmf"
+      attribution: "spectral"
+dataset:
+  manifest: data/benchmarks/matrix_v1/3spk_ovl00_10db/manifest.json

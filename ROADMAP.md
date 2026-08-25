@@ -9,7 +9,7 @@
 | Phase | Milestone | Status |
 |---|---|---|
 | Phase 0 — Project Infrastructure | M0 | ✅ Done (2026-08-25) |
-| Phase 1 — Dataset Generator | M1 | 🟨 In progress (generator done; corpus download + reverb pending) |
+| Phase 1 — Dataset Generator | M1 | ✅ Done (2026-08-25) |
 | Phase 2 — Diarization Baseline | M2 | 🟨 In progress (metrics + VAD + pyannote adapter done; viz + real pyannote runs pending) |
 | Phase 3 — Classical Separation | M3 | 🟨 In progress (STFT/NMF + SI-SDR/BSS metrics done; PESQ/STOI pending) |
 | Phase 4 — Neural Separation | M4 | 🟨 In progress (SepFormer validated end-to-end on CPU; TF-GridNet + full matrix pending) |
@@ -95,7 +95,8 @@ experimental matrix (speakers, overlap ratio, SNR, duration).
 - [x] Ground truth export: per-speaker clean wav + RTTM-style segment annotations
 - [x] SNR control: additive noise at {clean, 20, 10, 5, 0 dB}; noise corpus selection
       — *white Gaussian noise for now; dedicated noise corpus pending*
-- [ ] Reverberation support (simulated RIRs), optional per configuration
+- [x] Reverberation support (simulated RIRs), optional per configuration
+      — ✅ synthetic exponential-decay RIRs, deterministic per seed (`reverb={"rt60": ...}`)
 - [x] Duration control: 10 s / 30 s / 60 s / 5 min / 10 min mixtures
 - [x] Deterministic generation from a seed (regenerating a dataset id reproduces it byte-for-byte)
 - [x] Metadata manifest per mixture (speakers, overlap ratio, SNR, sources, seed)
@@ -186,6 +187,9 @@ benchmark them head-to-head. Pretrained only, no fine-tuning yet (ADR-004).
 - [x] Unknown-speaker-count handling policy defined per model (fixed-N vs estimated)
       — *neural models are fixed-N; `num_speakers` passed from manifest metadata*
 - [ ] Benchmark across the experimental matrix: speakers × overlap × SNR × duration
+      — 🟨 first matrix pass done (2-3 spk × overlap {0,50} % × {clean,10 dB},
+        24 cells): neural degrades gracefully at 3 spk, NMF collapses,
+        hybrid inherits separator artifacts. Duration + reverb cells pending.
 - [x] Permutation-invariant evaluation (match outputs to ground-truth speakers)
       — *done in Phase 3 (`best_pairing_si_sdr`)*
 
