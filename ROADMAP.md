@@ -10,7 +10,7 @@
 |---|---|---|
 | Phase 0 — Project Infrastructure | M0 | ✅ Done (2026-08-25) |
 | Phase 1 — Dataset Generator | M1 | 🟨 In progress (generator done; corpus download + reverb pending) |
-| Phase 2 — Diarization Baseline | M2 | 🔲 Not started |
+| Phase 2 — Diarization Baseline | M2 | 🟨 In progress (metrics + VAD + pyannote adapter done; viz + real pyannote runs pending) |
 | Phase 3 — Classical Separation | M3 | 🔲 Not started |
 | Phase 4 — Neural Separation | M4 | 🔲 Not started |
 | Phase 5 — Hybrid Pipelines | M5 | 🔲 Not started |
@@ -117,19 +117,21 @@ overlap degrades diarization. Establishes the baseline all pipelines improve on.
 
 ### Tasks
 
-- [ ] VAD integration (voice activity detection as a standalone module)
-- [ ] pyannote.audio diarizer implementing the common `Diarizer` interface
-- [ ] DER evaluation on the synthetic benchmark set
-- [ ] JER evaluation
-- [ ] Overlap-region detection accuracy (does it flag overlapping spans?)
-- [ ] Speaker confusion analysis (missed speech / false alarm speech breakdown)
+- [x] VAD integration (voice activity detection as a standalone module)
+      — *energy baseline; pyannote VAD can replace it later*
+- [x] pyannote.audio diarizer implementing the common `Diarizer` interface
+      — *adapter ready; real runs need `pip install pyannote.audio` + HF token*
+- [x] DER evaluation on the synthetic benchmark set (via `evaluate` CLI)
+- [x] JER evaluation
+- [x] Overlap-region detection accuracy (precision/recall/F1 on overlap spans)
+- [x] Speaker confusion analysis (DER decomposition: FA / missed / confusion seconds)
 - [ ] Visualization tools (timeline plots: ground truth vs hypothesis, overlap heatmaps)
 
 **Acceptance criteria**
 
-- DER/JER reported for at least {2 spk × overlap 0/25/50/75 %} configurations.
-- Results stored as JSON per experiment (model version, seed, hardware recorded).
-- Timeline visualizations generated automatically for a sample of mixtures.
+- DER/JER reported for at least {2 spk × overlap 0/25/50/75 %} configurations. ✅ pipeline validated end-to-end with the VAD baseline; real numbers await pyannote runs.
+- Results stored as JSON per experiment (model version, seed, hardware recorded). ✅ JSON contract; hardware field to be added with first GPU run.
+- Timeline visualizations generated automatically for a sample of mixtures. 🔲
 
 ---
 

@@ -75,18 +75,57 @@ def cmd_diarize(args):
 
 def cmd_evaluate(args):
     cfg = ExperimentConfig.load(args.config)
-    record = {
+    model_name = cfg.model["name"]
+
+    if model_name in DIARIZERS and "manifest" in cfg.dataset:
+        record = evaluate_diarization(cfg)
+    else:
+        record = {
+            "experiment": cfg.name,
+            "seed": cfg.seed,
+            "model": model_name,
+            "model_config": cfg.model,
+            "dataset": cfg.dataset,
+            "metrics": {},
+            "status": "not-implemented",
+        }
+    ResultWriter(args.results).write(record)
+    print(f"experiment '{cfg.name}' recorded to {args.results}/")
+    return 0
+
+
+def evaluate_diarization(cfg):
+    """Run a registered diarizer over a manifest dataset and score DER/JER."""
+    from benchmark.datasets import ManifestDataset
+    from benchmark.metrics import der, jer, overlap_detection_scores
+
+    dataset = ManifestDataset(cfg.dataset["manifest"])
+    diarizer = DIARIZERS[cfg.model["name"]](**cfg.model.get("params", {}))
+
+    totals = {"der": 0.0, "jer": 0.0, "overlap_precision": 0.0, "overlap_recall": 0.0}
+    n = 0
+    for mixture in dataset:
+        audio, sr = mixture.load_mixture()
+        hypothesis = diarizer.diarize(audio, sr)
+        scores = der(list(mixture.segments), hypothesis)
+        totals["der"] += scores["der"]
+        totals["jer"] += jer(list(mixture.segments), hypothesis)
+        ov = overlap_detection_scores(list(mixture.segments), hypothesis)
+        totals["overlap_precision"] += ov["precision"]
+        totals["overlap_recall"] += ov["recall"]
+        n += 1
+
+    metrics = {k: v / n for k, v in totals.items()} if n else dict(totals)
+    metrics["num_mixtures"] = n
+    return {
         "experiment": cfg.name,
         "seed": cfg.seed,
         "model": cfg.model["name"],
         "model_config": cfg.model,
         "dataset": cfg.dataset,
-        "metrics": {},
-        "status": "not-implemented",
+        "metrics": metrics,
+        "status": "ok",
     }
-    ResultWriter(args.results).write(record)
-    print(f"experiment '{cfg.name}' recorded to {args.results}/")
-    return 0
 
 
 def cmd_compare(args):
