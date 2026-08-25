@@ -16,6 +16,7 @@ class Mixture:
     segments: tuple
     metadata: dict
     sample_rate: int
+    source_speakers: tuple = ()
 
     @property
     def num_sources(self):
@@ -52,6 +53,7 @@ class ManifestDataset:
                 ),
                 metadata=dict(entry.get("metadata", {})),
                 sample_rate=raw["sample_rate"],
+                source_speakers=tuple(entry.get("source_speakers", [])),
             )
             for entry in raw["mixtures"]
         ]

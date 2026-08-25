@@ -21,7 +21,8 @@ DEFAULT_OVERLAP_RATIO = 0.75
 def stft(audio, sample_rate, n_fft=DEFAULT_N_FFT, overlap=DEFAULT_OVERLAP_RATIO):
     """Complex STFT of a mono signal. Returns (spectrogram [freq, time], params)."""
     audio = np.asarray(audio, dtype=np.float32)
-    n_overlap = int(n_fft * overlap)
+    n_fft = min(int(n_fft), max(len(audio), 2))
+    n_overlap = min(int(n_fft * overlap), n_fft - 1)
     _, _, Z = scipy_stft(
         audio,
         fs=sample_rate,

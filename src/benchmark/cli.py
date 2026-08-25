@@ -78,7 +78,9 @@ def cmd_evaluate(args):
     cfg = ExperimentConfig.load(args.config)
     model_name = cfg.model["name"]
 
-    if model_name in DIARIZERS and "manifest" in cfg.dataset:
+    if model_name == "hybrid" and "manifest" in cfg.dataset:
+        record = evaluate_hybrid(cfg)
+    elif model_name in DIARIZERS and "manifest" in cfg.dataset:
         record = evaluate_diarization(cfg)
     elif model_name in SEPARATORS and "manifest" in cfg.dataset:
         record = evaluate_separation(cfg)
@@ -95,6 +97,63 @@ def cmd_evaluate(args):
     ResultWriter(args.results).write(record)
     print(f"experiment '{cfg.name}' recorded to {args.results}/")
     return 0
+
+
+def evaluate_hybrid(cfg):
+    """End-to-end hybrid pipeline evaluation: selective separation, attribution,
+    reassembly, scored per speaker against ground truth (ADR-005, RQ4)."""
+    from benchmark.datasets import ManifestDataset
+    from benchmark.hybrid import HybridPipeline
+    from benchmark.separation_metrics import bss_metrics, si_sdr
+
+    dataset = ManifestDataset(cfg.dataset["manifest"])
+    params = cfg.model.get("params", {})
+    diarizer = DIARIZERS[params.get("diarizer", "noop")](**params.get("diarizer_params", {}))
+    separator = SEPARATORS[params.get("separator", "identity")](
+        **params.get("separator_params", {})
+    )
+    pipeline = HybridPipeline(diarizer=diarizer, separator=separator)
+
+    totals = {"si_sdr": 0.0, "sdr": 0.0, "sir": 0.0, "sar": 0.0}
+    selective_total = full_total = 0.0
+    n = 0
+    for mixture in dataset:
+        audio, sr = mixture.load_mixture()
+        result = pipeline.process(
+            audio,
+            sr,
+            num_speakers=mixture.metadata.get("num_speakers"),
+            compare_full=True,
+        )
+
+        for src_idx, spk in enumerate(mixture.source_speakers):
+            if spk not in result.tracks:
+                continue
+            reference, _ = mixture.load_source(src_idx)
+            totals["si_sdr"] += si_sdr(reference, result.tracks[spk])
+            bss = bss_metrics([reference], [result.tracks[spk]])
+            for key in ("sdr", "sir", "sar"):
+                totals[key] += bss[key]
+
+        selective_total += result.selective_time
+        full_total += result.full_time if result.full_time is not None else 0.0
+        n += 1
+
+    metrics = {k: v / n for k, v in totals.items()} if n else dict(totals)
+    metrics.update(
+        selective_time_seconds=selective_total,
+        full_time_seconds=full_total,
+        num_mixtures=n,
+    )
+    return {
+        "experiment": cfg.name,
+        "seed": cfg.seed,
+        "model": cfg.model["name"],
+        "model_config": cfg.model,
+        "dataset": cfg.dataset,
+        "metrics": metrics,
+        "status": "ok",
+    }
 
 
 def evaluate_diarization(cfg):

@@ -243,6 +243,7 @@ def generate_dataset(
                 "id": f"mix_{i:04d}",
                 "mixture": rel(mix_dir / "mixture.wav"),
                 "sources": [rel(mix_dir / n) for n in source_names],
+                "source_speakers": [s.speaker for s in result.segments],
                 "segments": [
                     {"start": s.start, "end": s.end, "speaker": s.speaker} for s in result.segments
                 ],

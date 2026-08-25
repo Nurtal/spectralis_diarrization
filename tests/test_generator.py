@@ -179,6 +179,12 @@ class TestGenerateDataset:
         raw = json.loads(path.read_text())
         assert raw["seed"] == 55
         assert raw["version"]
+        entry = raw["mixtures"][0]
+        # source files must be aligned with their speaker labels
+        assert "source_speakers" in entry
+        assert len(entry["source_speakers"]) == len(entry["sources"])
+        seg_speakers = {s["speaker"] for s in entry["segments"]}
+        assert set(entry["source_speakers"]) == seg_speakers
 
     def test_reproducible_byte_for_byte(self, clips_dir, tmp_path):
         kwargs = dict(
