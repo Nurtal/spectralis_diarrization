@@ -751,6 +751,10 @@ The matrix will expand as the project matures.
 
 # Roadmap
 
+> The detailed, actionable roadmap (tasks, acceptance criteria, execution order)
+> lives in [ROADMAP.md](ROADMAP.md). Architectural decisions are recorded in
+> [docs/adr/](docs/adr/).
+
 ## Phase 0 — Project Infrastructure
 
 - [ ] Repository structure
