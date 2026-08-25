@@ -8,7 +8,7 @@
 
 | Phase | Milestone | Status |
 |---|---|---|
-| Phase 0 — Project Infrastructure | M0 | 🔲 Not started |
+| Phase 0 — Project Infrastructure | M0 | ✅ Done (2026-08-25) |
 | Phase 1 — Dataset Generator | M1 | 🔲 Not started |
 | Phase 2 — Diarization Baseline | M2 | 🔲 Not started |
 | Phase 3 — Classical Separation | M3 | 🔲 Not started |
@@ -53,25 +53,27 @@ just structure, interfaces, tooling, and reproducibility plumbing.
 
 ### Tasks
 
-- [ ] Python project scaffold (`pyproject.toml`, package under `src/`)
-- [ ] Environment management (locked dependencies; document Python version)
-- [ ] Repository layout matching the README architecture proposal
+- [x] Python project scaffold (`pyproject.toml`, package under `src/`)
+- [x] Environment management (locked dependencies; document Python version)
+- [x] Repository layout matching the README architecture proposal
       (`diarization/`, `separation/`, `evaluation/`, `datasets/`, `experiments/`)
-- [ ] Audio loading utilities (read/write WAV/FLAC, resampling to a common rate)
-- [ ] Common `Diarizer` base class (`diarize(audio, sample_rate) -> segments`)
-- [ ] Common `Separator` base class (`separate(audio, sample_rate, num_speakers=None) -> sources`)
-- [ ] Dataset interface (iteration over mixtures + ground truth + metadata)
-- [ ] Experiment configuration format (YAML configs with seed, model, dataset params)
-- [ ] Result storage (one machine-readable JSON per experiment run)
-- [ ] Basic CLI entry point (`python -m benchmark {diarize,separate,evaluate,compare}`)
-- [ ] Test framework + CI running lint and tests on every push
+      — Phase 0 keeps flat modules (`audio`, `interfaces`, `datasets`, `config`,
+      `results`, `registry`, `cli`); split into subpackages when they grow
+- [x] Audio loading utilities (read/write WAV/FLAC, resampling to a common rate)
+- [x] Common `Diarizer` base class (`diarize(audio, sample_rate) -> segments`)
+- [x] Common `Separator` base class (`separate(audio, sample_rate, num_speakers=None) -> sources`)
+- [x] Dataset interface (iteration over mixtures + ground truth + metadata)
+- [x] Experiment configuration format (YAML configs with seed, model, dataset params)
+- [x] Result storage (one machine-readable JSON per experiment run)
+- [x] Basic CLI entry point (`python -m benchmark {diarize,separate,evaluate,compare}`)
+- [x] Test framework + CI running lint and tests on every push
 
 **Acceptance criteria**
 
-- A fresh clone can install the environment with one documented command.
-- `python -m benchmark --help` runs.
-- A dummy `Separator` and `Diarizer` implementation pass the interface tests.
-- An experiment config produces an empty-but-valid result JSON.
+- A fresh clone can install the environment with one documented command. ✅ (`uv sync`)
+- `python -m benchmark --help` runs. ✅
+- A dummy `Separator` and `Diarizer` implementation pass the interface tests. ✅
+- An experiment config produces an empty-but-valid result JSON. ✅
 
 ---
 

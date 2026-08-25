@@ -1035,10 +1035,18 @@ TBD.
 
 ---
 
-# Status
+## Status
 
 🚧 **Research / Benchmark — Early Development**
 
 The project is currently focused on building the dataset, baseline implementations and evaluation framework.
+
+### Quick start
+
+```bash
+uv sync                      # install environment (one command)
+uv run python -m benchmark --help
+uv run pytest tests/         # run the test suite
+```
 
 The objective is to establish a rigorous benchmark before developing a custom end-to-end system.
