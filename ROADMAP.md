@@ -9,7 +9,7 @@
 | Phase | Milestone | Status |
 |---|---|---|
 | Phase 0 — Project Infrastructure | M0 | ✅ Done (2026-08-25) |
-| Phase 1 — Dataset Generator | M1 | 🔲 Not started |
+| Phase 1 — Dataset Generator | M1 | 🟨 In progress (generator done; corpus download + reverb pending) |
 | Phase 2 — Diarization Baseline | M2 | 🔲 Not started |
 | Phase 3 — Classical Separation | M3 | 🔲 Not started |
 | Phase 4 — Neural Separation | M4 | 🔲 Not started |
@@ -87,22 +87,24 @@ experimental matrix (speakers, overlap ratio, SNR, duration).
 ### Tasks
 
 - [ ] Select and download clean single-speaker speech corpora (e.g., LibriSpeech,
-      VCTK); record dataset versions in metadata
-- [ ] Utterance-level index of source clips (speaker id, duration, gender where available)
-- [ ] Mixture generator: N speakers (2, 3, 4+), controlled overlap ratio
+      VCTK); record dataset versions in metadata — *generator accepts any
+      `<speaker_id>/<utterance>.wav` tree; actual corpus download pending*
+- [x] Utterance-level index of source clips (speaker id, duration, gender where available)
+- [x] Mixture generator: N speakers (2, 3, 4+), controlled overlap ratio
       (0–90 %), random or scripted placement
-- [ ] Ground truth export: per-speaker clean wav + RTTM-style segment annotations
-- [ ] SNR control: additive noise at {clean, 20, 10, 5, 0 dB}; noise corpus selection
+- [x] Ground truth export: per-speaker clean wav + RTTM-style segment annotations
+- [x] SNR control: additive noise at {clean, 20, 10, 5, 0 dB}; noise corpus selection
+      — *white Gaussian noise for now; dedicated noise corpus pending*
 - [ ] Reverberation support (simulated RIRs), optional per configuration
-- [ ] Duration control: 10 s / 30 s / 60 s / 5 min / 10 min mixtures
-- [ ] Deterministic generation from a seed (regenerating a dataset id reproduces it byte-for-byte)
-- [ ] Metadata manifest per mixture (speakers, overlap ratio, SNR, sources, seed)
+- [x] Duration control: 10 s / 30 s / 60 s / 5 min / 10 min mixtures
+- [x] Deterministic generation from a seed (regenerating a dataset id reproduces it byte-for-byte)
+- [x] Metadata manifest per mixture (speakers, overlap ratio, SNR, sources, seed)
 
 **Acceptance criteria**
 
-- Generating a 2-speaker, 50 % overlap, 20 dB mixture from a fixed seed is reproducible.
-- Every generated mixture ships with ground-truth wavs and segment annotations loadable by the Phase 0 dataset interface.
-- Generation speed makes a benchmark set of ≥100 mixtures practical.
+- Generating a 2-speaker, 50 % overlap, 20 dB mixture from a fixed seed is reproducible. ✅
+- Every generated mixture ships with ground-truth wavs and segment annotations loadable by the Phase 0 dataset interface. ✅
+- Generation speed makes a benchmark set of ≥100 mixtures practical. ✅ (~125 mixtures/s on CPU)
 
 ---
 
