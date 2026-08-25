@@ -5,7 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from benchmark.config import ExperimentConfig
-from benchmark.registry import DIARIZERS, SEPARATORS
+from benchmark.registry import DIARIZERS, ENCODERS, SEPARATORS
 from benchmark.results import ResultWriter, read_results
 
 
@@ -112,7 +112,17 @@ def evaluate_hybrid(cfg):
     separator = SEPARATORS[params.get("separator", "identity")](
         **params.get("separator_params", {})
     )
-    pipeline = HybridPipeline(diarizer=diarizer, separator=separator)
+    attribution = params.get("attribution", "spectral")
+    encoder = None
+    if attribution == "embedding":
+        encoder_name = params.get("encoder")
+        if encoder_name is None:
+            print("error: hybrid embedding attribution requires params.encoder", file=sys.stderr)
+            return 2
+        encoder = ENCODERS[encoder_name](**params.get("encoder_params", {}))
+    pipeline = HybridPipeline(
+        diarizer=diarizer, separator=separator, attribution=attribution, encoder=encoder
+    )
 
     totals = {"si_sdr": 0.0, "sdr": 0.0, "sir": 0.0, "sar": 0.0}
     selective_total = full_total = 0.0

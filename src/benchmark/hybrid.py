@@ -44,14 +44,32 @@ def spectral_profile(audio, sample_rate, n_fft=512):
 
 
 class HybridPipeline:
-    def __init__(self, diarizer, separator, crossfade_s=DEFAULT_CROSSFADE_S, pad_s=DEFAULT_PAD_S):
+    def __init__(
+        self,
+        diarizer,
+        separator,
+        crossfade_s=DEFAULT_CROSSFADE_S,
+        pad_s=DEFAULT_PAD_S,
+        attribution="spectral",
+        encoder=None,
+        max_enrollment_s=10.0,
+    ):
+        if attribution not in ("spectral", "embedding"):
+            raise ValueError(f"unknown attribution mode: {attribution}")
+        if attribution == "embedding" and encoder is None:
+            raise ValueError("attribution='embedding' requires an encoder")
         self.diarizer = diarizer
         self.separator = separator
         self.crossfade_s = crossfade_s
         self.pad_s = pad_s
+        self.attribution = attribution
+        self.encoder = encoder
+        self.max_enrollment_s = max_enrollment_s
 
     def process(self, audio, sample_rate, num_speakers=None, compare_full=False):
         audio = np.asarray(audio, dtype=np.float32)
+        self._source_audio = audio
+        self._source_sr = sample_rate
         segments = self.diarizer.diarize(audio, sample_rate)
 
         overlap_regions = self._overlap_regions(segments)
@@ -160,8 +178,79 @@ class HybridPipeline:
     def _attribute(
         self, sources, chunk, sr, segments, speakers, overlap_regions, region_start, region_end
     ):
-        """Map each separated source index to a speaker via spectral similarity
-        against the speaker's non-overlapped reference speech."""
+        """Map each separated source index to a speaker. Two strategies:
+        - spectral: similarity against the speaker's non-overlapped reference
+          speech (Phase 5 baseline);
+        - embedding: speaker-encoder embeddings of sources vs enrollment audio
+          extracted from clean solo segments (ADR-006, Phase 6).
+        """
+        if self.attribution == "embedding":
+            sims = self._embedding_similarities(sources, sr, segments, speakers)
+        else:
+            sims = self._spectral_similarities(
+                sources,
+                chunk,
+                sr,
+                segments,
+                speakers,
+                overlap_regions,
+                region_start,
+                region_end,
+            )
+
+        mapping = {}
+        used_sources, used_speakers = set(), set()
+        for (i, spk), score in sorted(sims.items(), key=lambda kv: -kv[1]):
+            if i in used_sources or spk in used_speakers:
+                continue
+            mapping[i] = spk
+            used_sources.add(i)
+            used_speakers.add(spk)
+        for i in range(len(sources)):
+            if i not in mapping:
+                best = max(speakers, key=lambda spk: sims[(i, spk)])
+                mapping[i] = best
+        return mapping
+
+    def _enrollment_embeddings(self, segments, speakers, source_audio, source_sr):
+        """Per-speaker enrollment embeddings from clean solo segments (cached)."""
+        from benchmark.enrollment import (
+            enrollment_audio,
+            select_enrollment_segments,
+        )
+
+        cache = getattr(self, "_enrollment_cache", None)
+        if cache is None or cache.get("_key") != id(segments):
+            cache = {"_key": id(segments)}
+            self._enrollment_cache = cache
+
+        embeddings = {}
+        for spk in speakers:
+            if spk in cache:
+                embeddings[spk] = cache[spk]
+                continue
+            spans = select_enrollment_segments(segments, spk, max_duration=self.max_enrollment_s)
+            clip = enrollment_audio(source_audio, source_sr, spans)
+            emb = self.encoder.encode(clip, source_sr) if len(clip) else None
+            cache[spk] = emb
+            embeddings[spk] = emb
+        return embeddings
+
+    def _embedding_similarities(self, sources, sr, segments, speakers):
+        enrollments = self._enrollment_embeddings(
+            segments, speakers, self._source_audio, self._source_sr
+        )
+        sims = {}
+        for i, src in enumerate(sources):
+            src_emb = self.encoder.encode(src, sr)
+            for spk in speakers:
+                emb = enrollments.get(spk)
+                sims[(i, spk)] = float(np.dot(src_emb, emb)) if emb is not None else -1.0
+        return sims
+
+    def _spectral_similarities(
+        self, sources, chunk, sr, segments, speakers, overlap_regions, region_start, region_end
+    ):
         refs = {}
         for spk in speakers:
             spans = []
@@ -197,20 +286,7 @@ class HybridPipeline:
             prof = spectral_profile(src, sr)
             for spk, profiles in refs.items():
                 sims[(i, spk)] = max((float(np.dot(prof, p)) for p in profiles), default=-1.0)
-
-        mapping = {}
-        used_sources, used_speakers = set(), set()
-        for (i, spk), score in sorted(sims.items(), key=lambda kv: -kv[1]):
-            if i in used_sources or spk in used_speakers:
-                continue
-            mapping[i] = spk
-            used_sources.add(i)
-            used_speakers.add(spk)
-        for i in range(len(sources)):
-            if i not in mapping:
-                best = max(speakers, key=lambda spk: sims[(i, spk)])
-                mapping[i] = best
-        return mapping
+        return sims
 
     def _blend(self, output, replacement, i0, i1, sr):
         fade = min(int(self.crossfade_s * sr), (i1 - i0) // 2)

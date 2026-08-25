@@ -131,6 +131,46 @@ class TestEvaluateHybrid:
             assert key in metrics
         assert metrics["num_mixtures"] == 2
 
+    def test_embedding_attribution_wiring(self, tmp_path, bench_manifest, oracle_diarizer):
+        from benchmark.registry import ENCODERS
+
+        class BandEncoder:
+            def encode(self, audio, sample_rate):
+                from benchmark.stft import stft
+
+                spec, params = stft(np.asarray(audio, dtype=np.float32), sample_rate)
+                freqs = np.fft.rfftfreq(params.n_fft, 1 / sample_rate)
+                low = float((np.abs(spec)[freqs < 1000] ** 2).sum())
+                high = float((np.abs(spec)[freqs >= 1000] ** 2).sum())
+                v = np.array([low, high], dtype=np.float32)
+                n = np.linalg.norm(v)
+                return v / n if n > 0 else v
+
+        ENCODERS["band"] = BandEncoder
+        try:
+            cfg = tmp_path / "exp.yaml"
+            cfg.write_text(
+                "name: hybrid-emb\n"
+                "model:\n"
+                "  name: hybrid\n"
+                "  params:\n"
+                "    diarizer: oracle\n"
+                "    separator: nmf\n"
+                "    attribution: embedding\n"
+                "    encoder: band\n"
+                f"dataset:\n  manifest: {bench_manifest}\n"
+            )
+            results = tmp_path / "results_emb"
+
+            rc = main(["evaluate", "--config", str(cfg), "--results", str(results)])
+        finally:
+            ENCODERS.pop("band", None)
+
+        assert rc == 0
+        record = json.loads(next(results.glob("*.json")).read_text())
+        assert record["status"] == "ok"
+        assert record["metrics"]["num_mixtures"] == 2
+
     def test_selective_separation_costs_less_than_full(
         self, tmp_path, bench_manifest, oracle_diarizer
     ):

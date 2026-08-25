@@ -4,6 +4,7 @@ from benchmark.interfaces import Diarizer, Separator
 from benchmark.neural_separator import SpeechBrainSeparator
 from benchmark.nmf_separator import NMFSeparator
 from benchmark.pyannote_diarizer import PyannoteDiarizer
+from benchmark.speaker_encoder import SpeakerEncoder
 from benchmark.vad import energy_vad
 
 
@@ -67,4 +68,8 @@ DIARIZERS = {
     # Constructor raises an informative RuntimeError when pyannote.audio or
     # the HuggingFace token are unavailable.
     "pyannote": PyannoteDiarizer,
+}
+
+ENCODERS = {
+    "ecapa": SpeakerEncoder,
 }

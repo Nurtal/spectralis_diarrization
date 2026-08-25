@@ -126,6 +126,55 @@ class TestAttribution:
         assert score > 15.0
 
 
+class BandEncoder:
+    """Duck-typed speaker encoder: embedding = normalized [low, high] band energies."""
+
+    def encode(self, audio, sample_rate):
+        from benchmark.stft import stft
+
+        spec, params = stft(np.asarray(audio, dtype=np.float32), sample_rate)
+        freqs = np.fft.rfftfreq(params.n_fft, 1 / sample_rate)
+        low = float((np.abs(spec)[freqs < 1000] ** 2).sum())
+        high = float((np.abs(spec)[freqs >= 1000] ** 2).sum())
+        v = np.array([low, high], dtype=np.float32)
+        n = np.linalg.norm(v)
+        return v / n if n > 0 else v
+
+
+class TestEmbeddingAttribution:
+    def test_embedding_mode_attributes_correctly(self, scenario):
+        pipe = HybridPipeline(
+            diarizer=OracleDiarizer(scenario["segments"]),
+            separator=NMFishSeparator(),
+            attribution="embedding",
+            encoder=BandEncoder(),
+        )
+        result = pipe.process(scenario["mixture"], SR)
+
+        assert set(result.tracks) == {"A", "B"}
+        prof_a = spectral_profile(result.tracks["A"], SR)
+        prof_b = spectral_profile(result.tracks["B"], SR)
+        freqs = np.fft.rfftfreq(512, 1 / SR)
+        assert freqs[int(np.argmax(prof_a))] < 1000
+        assert freqs[int(np.argmax(prof_b))] > 2000
+
+    def test_embedding_mode_requires_encoder(self, scenario):
+        with pytest.raises(ValueError, match="encoder"):
+            HybridPipeline(
+                diarizer=OracleDiarizer(scenario["segments"]),
+                separator=NMFishSeparator(),
+                attribution="embedding",
+            )
+
+    def test_unknown_attribution_mode_rejected(self, scenario):
+        with pytest.raises(ValueError, match="attribution"):
+            HybridPipeline(
+                diarizer=OracleDiarizer(scenario["segments"]),
+                separator=NMFishSeparator(),
+                attribution="telepathy",
+            )
+
+
 class TestTimings:
     def test_records_selective_and_full_times(self, scenario, pipeline):
         result = pipeline.process(scenario["mixture"], SR, compare_full=True)
