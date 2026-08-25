@@ -5,3 +5,6 @@ __pycache__/
 .ruff_cache/
 results/
 dist/
+data/downloads/
+data/clips_*/
+data/benchmarks/**/*.wav

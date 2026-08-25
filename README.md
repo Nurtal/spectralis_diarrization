@@ -910,17 +910,19 @@ python -m benchmark compare \
 
 # Results
 
-Results should eventually be presented as tables such as:
+First real-speech pass (LibriSpeech test-clean subset, 2 speakers, 8 s mixtures,
+clean, overlap sweep, oracle diarization for hybrid pipelines):
 
-| Model | SI-SDR ↑ | SDR ↑ | SIR ↑ | SAR ↑ | WER ↓ | Runtime ↓ |
-|---|---:|---:|---:|---:|---:|---:|
-| NMF | — | — | — | — | — | — |
-| Conv-TasNet | — | — | — | — | — | — |
-| DPRNN | — | — | — | — | — | — |
-| SepFormer | — | — | — | — | — | — |
-| TF-GridNet | — | — | — | — | — | — |
-| Hybrid | — | — | — | — | — | — |
-| Speaker-conditioned | — | — | — | — | — | — |
+| Model | SI-SDR ↑ | SIR ↑ | SAR ↑ |
+|---|---:|---:|---:|
+| NMF (blind) | -0.11 | 3.3 | 7.0 |
+| SepFormer (pretrained WSJ0) | **1.46** | **26.0** | 1.6 |
+| Hybrid selective (NMF + spectral attr.) | -1.57 | 74.4 | -1.6 |
+
+Full details: [data/benchmarks/real_speech_v1/report.md](data/benchmarks/real_speech_v1/report.md).
+Early findings: pretrained neural separation generalizes across corpora far
+better than blind NMF; hybrid selective pipelines inherit the separator's
+artifacts inside overlaps, so separator quality dominates end-to-end quality.
 
 No model should be declared the winner until it has been evaluated under the same conditions as the others.
 

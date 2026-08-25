@@ -1,0 +1,7 @@
+name: sepformer_ovl75
+seed: 0
+model:
+  name: sepformer
+  params:
+dataset:
+  manifest: data/benchmarks/real_speech_v1/ovl75/manifest.json

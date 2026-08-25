@@ -131,6 +131,12 @@ def generate_mixture(clips, num_speakers, duration, overlap_ratio, snr_db=None, 
         durations.append(len(audio) / sr)
 
     starts = _place(durations, overlap_ratio)
+    # real-speech guard: clips can be longer than the target duration; clamp
+    # every start so each segment fits entirely inside the mixture window
+    starts = [
+        max(0.0, min(start, duration - d)) if d < duration else max(0.0, duration - d - 1e-3)
+        for start, d in zip(starts, durations)
+    ]
 
     total_samples = int(duration * chosen[0].sample_rate)
     sources = []

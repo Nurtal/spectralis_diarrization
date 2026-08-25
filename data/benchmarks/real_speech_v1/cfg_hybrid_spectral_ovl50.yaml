@@ -1,0 +1,10 @@
+name: hybrid_spectral_ovl50
+seed: 0
+model:
+  name: hybrid
+  params:
+      diarizer: "oracle"
+      separator: "nmf"
+      attribution: "spectral"
+dataset:
+  manifest: data/benchmarks/real_speech_v1/ovl50/manifest.json

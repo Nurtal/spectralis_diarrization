@@ -111,7 +111,7 @@ def evaluate_hybrid(cfg):
     from benchmark.separation_metrics import bss_metrics, si_sdr
 
     dataset = ManifestDataset(cfg.dataset["manifest"])
-    params = cfg.model.get("params", {})
+    params = (cfg.model.get("params") or {})
     diarizer = DIARIZERS[params.get("diarizer", "noop")](**params.get("diarizer_params", {}))
     separator = SEPARATORS[params.get("separator", "identity")](
         **params.get("separator_params", {})
@@ -176,7 +176,7 @@ def evaluate_diarization(cfg):
     from benchmark.metrics import der, jer, overlap_detection_scores
 
     dataset = ManifestDataset(cfg.dataset["manifest"])
-    diarizer = DIARIZERS[cfg.model["name"]](**cfg.model.get("params", {}))
+    diarizer = DIARIZERS[cfg.model["name"]](**(cfg.model.get("params") or {}))
 
     totals = {"der": 0.0, "jer": 0.0, "overlap_precision": 0.0, "overlap_recall": 0.0}
     n = 0
@@ -235,7 +235,7 @@ def evaluate_separation(cfg):
     from benchmark.separation_metrics import best_pairing_si_sdr, bss_metrics
 
     dataset = ManifestDataset(cfg.dataset["manifest"])
-    separator = SEPARATORS[cfg.model["name"]](**cfg.model.get("params", {}))
+    separator = SEPARATORS[cfg.model["name"]](**(cfg.model.get("params") or {}))
 
     totals = {"si_sdr": 0.0, "sdr": 0.0, "sir": 0.0, "sar": 0.0}
     inference_time = 0.0

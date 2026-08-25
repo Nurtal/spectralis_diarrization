@@ -213,3 +213,17 @@ class TestGenerateDataset:
             generate_mixture(
                 index_clips(clips_dir), num_speakers=5, duration=4.0, overlap_ratio=0.0, seed=0
             )
+
+    def test_clips_longer_than_mixture_are_clamped_inside(self, tmp_path):
+        # real-speech regression: chain placement must not push a segment past
+        # the mixture duration when clips are as long as the target duration
+        sr = SR
+        for spk in ("s1", "s2"):
+            d = tmp_path / spk
+            d.mkdir(parents=True)
+            save_audio(d / "long.wav", np.zeros(int(6.0 * sr), dtype=np.float32), sr)
+        result = generate_mixture(
+            index_clips(tmp_path), num_speakers=2, duration=5.0, overlap_ratio=0.01, seed=0
+        )
+        for seg in result.segments:
+            assert 0.0 <= seg.start < seg.end <= 5.0 + 1e-6

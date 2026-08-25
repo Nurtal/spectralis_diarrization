@@ -1,0 +1,127 @@
+{
+  "version": "synthetic-v1_seed175",
+  "sample_rate": 16000,
+  "seed": 175,
+  "mixtures": [
+    {
+      "id": "mix_0000",
+      "mixture": "mix_0000/mixture.wav",
+      "sources": [
+        "mix_0000/source_0.wav",
+        "mix_0000/source_1.wav"
+      ],
+      "source_speakers": [
+        "5683",
+        "8455"
+      ],
+      "segments": [
+        {
+          "start": 0.0,
+          "end": 8.0,
+          "speaker": "5683"
+        },
+        {
+          "start": 0.0,
+          "end": 8.0,
+          "speaker": "8455"
+        }
+      ],
+      "metadata": {
+        "num_speakers": 2,
+        "overlap_ratio": 0.75,
+        "snr_db": null,
+        "duration_seconds": 8.0
+      }
+    },
+    {
+      "id": "mix_0001",
+      "mixture": "mix_0001/mixture.wav",
+      "sources": [
+        "mix_0001/source_0.wav",
+        "mix_0001/source_1.wav"
+      ],
+      "source_speakers": [
+        "1580",
+        "2300"
+      ],
+      "segments": [
+        {
+          "start": 0.0,
+          "end": 2.135,
+          "speaker": "1580"
+        },
+        {
+          "start": 0.0,
+          "end": 8.0,
+          "speaker": "2300"
+        }
+      ],
+      "metadata": {
+        "num_speakers": 2,
+        "overlap_ratio": 0.75,
+        "snr_db": null,
+        "duration_seconds": 8.0
+      }
+    },
+    {
+      "id": "mix_0002",
+      "mixture": "mix_0002/mixture.wav",
+      "sources": [
+        "mix_0002/source_0.wav",
+        "mix_0002/source_1.wav"
+      ],
+      "source_speakers": [
+        "5683",
+        "8455"
+      ],
+      "segments": [
+        {
+          "start": 0.0,
+          "end": 2.19,
+          "speaker": "5683"
+        },
+        {
+          "start": 0.10950000000000015,
+          "end": 6.054500000000001,
+          "speaker": "8455"
+        }
+      ],
+      "metadata": {
+        "num_speakers": 2,
+        "overlap_ratio": 0.75,
+        "snr_db": null,
+        "duration_seconds": 8.0
+      }
+    },
+    {
+      "id": "mix_0003",
+      "mixture": "mix_0003/mixture.wav",
+      "sources": [
+        "mix_0003/source_0.wav",
+        "mix_0003/source_1.wav"
+      ],
+      "source_speakers": [
+        "4446",
+        "7021"
+      ],
+      "segments": [
+        {
+          "start": 0.0,
+          "end": 2.1,
+          "speaker": "4446"
+        },
+        {
+          "start": 0.1050000000000002,
+          "end": 6.57,
+          "speaker": "7021"
+        }
+      ],
+      "metadata": {
+        "num_speakers": 2,
+        "overlap_ratio": 0.75,
+        "snr_db": null,
+        "duration_seconds": 8.0
+      }
+    }
+  ]
+}

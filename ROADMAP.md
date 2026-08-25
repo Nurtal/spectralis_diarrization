@@ -15,7 +15,7 @@
 | Phase 4 — Neural Separation | M4 | 🟨 In progress (SepFormer validated end-to-end on CPU; TF-GridNet + full matrix pending) |
 | Phase 5 — Hybrid Pipelines | M5 | 🟨 In progress (pipeline + e2e eval done; matrix runs pending) |
 | Phase 6 — Speaker-Conditioned Separation | M6 | 🟨 In progress (encoder + enrollment + attribution comparison done; conditioned extraction model pending) |
-| Phase 7 — Benchmark Analysis | M7 | 🟨 In progress (tooling done; substantive findings need real corpora + full matrix) |
+| Phase 7 — Benchmark Analysis | M7 | 🟨 In progress (first real-speech pass done; matrix + findings pending) |
 
 Statuses: 🔲 not started · 🟨 in progress · ✅ done · ⏸️ blocked.
 
@@ -86,9 +86,9 @@ experimental matrix (speakers, overlap ratio, SNR, duration).
 
 ### Tasks
 
-- [ ] Select and download clean single-speaker speech corpora (e.g., LibriSpeech,
-      VCTK); record dataset versions in metadata — *generator accepts any
-      `<speaker_id>/<utterance>.wav` tree; actual corpus download pending*
+- [x] Select and download clean single-speaker speech corpora (e.g., LibriSpeech,
+      VCTK); record dataset versions in metadata
+      — ✅ LibriSpeech test-clean subset via `scripts/prep_librisspeech.py`
 - [x] Utterance-level index of source clips (speaker id, duration, gender where available)
 - [x] Mixture generator: N speakers (2, 3, 4+), controlled overlap ratio
       (0–90 %), random or scripted placement
