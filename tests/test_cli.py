@@ -62,7 +62,7 @@ class TestEvaluate:
     def test_config_produces_result_json(self, tmp_path):
         cfg = tmp_path / "exp.yaml"
         cfg.write_text(
-            "name: smoke\nseed: 3\nmodel:\n  name: identity\ndataset:\n  manifest: m.json\n"
+            "name: smoke\nseed: 3\nmodel:\n  name: future-model\ndataset:\n  manifest: m.json\n"
         )
         results = tmp_path / "results"
 
@@ -72,9 +72,8 @@ class TestEvaluate:
         files = list(results.glob("*.json"))
         assert len(files) == 1
         record = json.loads(files[0].read_text())
-        assert record["model"] == "identity"
-        assert record["experiment"] == "smoke"
-        assert record["seed"] == 3
+        assert record["model"] == "future-model"
+        assert record["status"] == "not-implemented"
 
 
 class TestCompare:

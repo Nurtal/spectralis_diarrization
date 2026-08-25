@@ -1,6 +1,7 @@
 """Model registries. Ships VAD baseline; pyannote registered when installed."""
 
 from benchmark.interfaces import Diarizer, Separator
+from benchmark.nmf_separator import NMFSeparator
 from benchmark.pyannote_diarizer import PyannoteDiarizer
 from benchmark.vad import energy_vad
 
@@ -40,6 +41,7 @@ class EnergyVadDiarizer(Diarizer):
 
 SEPARATORS = {
     "identity": IdentitySeparator,
+    "nmf": NMFSeparator,
 }
 
 DIARIZERS = {

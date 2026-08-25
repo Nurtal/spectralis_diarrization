@@ -22,6 +22,7 @@ def build_parser():
     p_sep.add_argument("--model", required=True)
     p_sep.add_argument("--input", required=True)
     p_sep.add_argument("--output", required=True)
+    p_sep.add_argument("--num-speakers", type=int, default=None)
 
     p_eval = sub.add_parser("evaluate", help="Run one experiment from a config")
     p_eval.add_argument("--config", required=True)
@@ -42,7 +43,7 @@ def cmd_separate(args):
         return 2
     separator = SEPARATORS[args.model]()
     audio, sr = load_audio(args.input)
-    sources = separator.separate(audio, sr)
+    sources = separator.separate(audio, sr, num_speakers=args.num_speakers)
     out_dir = Path(args.output)
     out_dir.mkdir(parents=True, exist_ok=True)
     for i, source in enumerate(sources):
@@ -79,6 +80,8 @@ def cmd_evaluate(args):
 
     if model_name in DIARIZERS and "manifest" in cfg.dataset:
         record = evaluate_diarization(cfg)
+    elif model_name in SEPARATORS and "manifest" in cfg.dataset:
+        record = evaluate_separation(cfg)
     else:
         record = {
             "experiment": cfg.name,
@@ -140,6 +143,50 @@ def cmd_compare(args):
     for model, value in zip(models, si_sdr):
         print(f"{model.ljust(width)}  {'-' if value is None else format(value, '.2f')}")
     return 0
+
+
+def evaluate_separation(cfg):
+    """Run a registered separator over a manifest dataset and score SI-SDR/BSS."""
+    import time
+
+    from benchmark.datasets import ManifestDataset
+    from benchmark.separation_metrics import best_pairing_si_sdr, bss_metrics
+
+    dataset = ManifestDataset(cfg.dataset["manifest"])
+    separator = SEPARATORS[cfg.model["name"]](**cfg.model.get("params", {}))
+
+    totals = {"si_sdr": 0.0, "sdr": 0.0, "sir": 0.0, "sar": 0.0}
+    inference_time = 0.0
+    n = 0
+    for mixture in dataset:
+        audio, sr = mixture.load_mixture()
+        references = [mixture.load_source(i)[0] for i in range(mixture.num_sources)]
+
+        start = time.perf_counter()
+        estimates = separator.separate(
+            audio,
+            sr,
+            num_speakers=mixture.metadata.get("num_speakers"),
+        )
+        inference_time += time.perf_counter() - start
+
+        totals["si_sdr"] += best_pairing_si_sdr(references, estimates)
+        bss = bss_metrics(references, estimates)
+        for key in ("sdr", "sir", "sar"):
+            totals[key] += bss[key]
+        n += 1
+
+    metrics = {k: v / n for k, v in totals.items()} if n else dict(totals)
+    metrics.update(inference_time_seconds=inference_time, num_mixtures=n)
+    return {
+        "experiment": cfg.name,
+        "seed": cfg.seed,
+        "model": cfg.model["name"],
+        "model_config": cfg.model,
+        "dataset": cfg.dataset,
+        "metrics": metrics,
+        "status": "ok",
+    }
 
 
 COMMANDS = {
