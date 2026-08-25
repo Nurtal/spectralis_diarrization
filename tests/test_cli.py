@@ -77,15 +77,36 @@ class TestEvaluate:
 
 
 class TestCompare:
-    def test_prints_model_names_from_results(self, tmp_path, capsys):
+    def test_prints_markdown_benchmark_table(self, tmp_path, capsys):
         from benchmark.results import ResultWriter
 
         w = ResultWriter(tmp_path)
-        w.write({"model": "nmf", "si_sdr": 3.1})
-        w.write({"model": "identity", "si_sdr": 0.0})
+        w.write({"model": "nmf", "metrics": {"si_sdr": 3.1}})
+        w.write({"model": "identity", "metrics": {"si_sdr": 0.0}})
 
         rc = main(["compare", "--results", str(tmp_path)])
 
         assert rc == 0
         out = capsys.readouterr().out
+        assert "| Model |" in out
         assert "nmf" in out and "identity" in out
+
+    def test_compare_empty_results_message(self, tmp_path, capsys):
+        rc = main(["compare", "--results", str(tmp_path)])
+        assert rc == 0
+        assert "no results" in capsys.readouterr().out.lower()
+
+
+class TestReport:
+    def test_writes_markdown_report(self, tmp_path):
+        from benchmark.results import ResultWriter
+
+        ResultWriter(tmp_path).write({"model": "nmf", "metrics": {"si_sdr": 3.1}, "runtime": 0.5})
+        out = tmp_path / "report.md"
+
+        rc = main(["report", "--results", str(tmp_path), "--out", str(out)])
+
+        assert rc == 0
+        content = out.read_text()
+        assert "# Benchmark Report" in content
+        assert "RQ" in content

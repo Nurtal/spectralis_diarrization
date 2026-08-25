@@ -15,7 +15,7 @@
 | Phase 4 — Neural Separation | M4 | 🟨 In progress (SepFormer validated end-to-end on CPU; TF-GridNet + full matrix pending) |
 | Phase 5 — Hybrid Pipelines | M5 | 🟨 In progress (pipeline + e2e eval done; matrix runs pending) |
 | Phase 6 — Speaker-Conditioned Separation | M6 | 🟨 In progress (encoder + enrollment + attribution comparison done; conditioned extraction model pending) |
-| Phase 7 — Benchmark Analysis | M7 | 🔲 Not started |
+| Phase 7 — Benchmark Analysis | M7 | 🟨 In progress (tooling done; substantive findings need real corpora + full matrix) |
 
 Statuses: 🔲 not started · 🟨 in progress · ✅ done · ⏸️ blocked.
 
@@ -273,23 +273,29 @@ No new models — analysis only.
 
 ### Tasks
 
-- [ ] Result aggregation across all experiment JSONs
-- [ ] Benchmark table generation (README "Results" format, filled in)
-- [ ] Plots: quality vs number of speakers (RQ6), quality vs overlap (RQ7),
+- [x] Result aggregation across all experiment JSONs (`analysis.aggregate`)
+- [x] Benchmark table generation (README "Results" format, filled in)
+      — `python -m benchmark compare` renders the markdown table
+- [x] Plots: quality vs number of speakers (RQ6), quality vs overlap (RQ7),
       robustness curves for noise/reverberation (RQ8)
-- [ ] Quality-vs-cost Pareto analysis (SI-SDR vs runtime)
+      — *plot functions ready (`plots.py`, optional matplotlib group `viz`);
+        sweep data to be produced by matrix runs*
+- [x] Quality-vs-cost Pareto analysis (SI-SDR vs runtime)
 - [ ] SI-SDR ↔ WER correlation analysis (RQ9), if ASR evaluation was included
 - [ ] Failure case catalog (worst-K mixtures per approach, with audio inspection notes)
+      — *worst-K table done; audio inspection notes pending real corpora*
 - [ ] Written benchmark report summarizing findings per research question
+      — ✅ generator ready (`python -m benchmark report`); substantive findings
+        pending Phases 1/2/4 leftovers (real corpus, pyannote runs, full matrix)
 - [ ] Public release of results, configs, and generation seeds
 
 **Acceptance criteria**
 
 - Every research question RQ1-RQ9 has either an answer or an explicit
-  "not answerable this cycle" note with reason.
-- All tables/plots regenerate from committed result files via one command.
+  "not answerable this cycle" note with reason. ✅ mechanism (RQ_STATUS in report).
+- All tables/plots regenerate from committed result files via one command. ✅ (`report`)
 - The final report states which architecture wins on which axis — or that no
-  single winner exists, with evidence.
+  single winner exists, with evidence. 🔲 awaits the full benchmark runs.
 
 ---
 

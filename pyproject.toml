@@ -20,6 +20,9 @@ neural = [
     "torchaudio>=2.0",
     "speechbrain>=1.0",
 ]
+viz = [
+    "matplotlib>=3.8",
+]
 
 [build-system]
 requires = ["hatchling"]

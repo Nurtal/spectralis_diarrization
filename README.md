@@ -1047,7 +1047,9 @@ The project is currently focused on building the dataset, baseline implementatio
 uv sync                      # install environment (one command)
 uv run python -m benchmark --help
 uv run pytest tests/         # run the test suite
-uv sync --group neural       # optional: torch + speechbrain for neural separators
+uv sync --group neural       # optional: torch + speechbrain (neural separators)
+uv sync --group viz          # optional: matplotlib (plots)
+uv run python -m benchmark report --results results --out report.md
 ```
 
 The objective is to establish a rigorous benchmark before developing a custom end-to-end system.

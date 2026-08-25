@@ -6,7 +6,7 @@ from pathlib import Path
 
 from benchmark.config import ExperimentConfig
 from benchmark.registry import DIARIZERS, ENCODERS, SEPARATORS
-from benchmark.results import ResultWriter, read_results
+from benchmark.results import ResultWriter
 
 
 def build_parser():
@@ -28,8 +28,12 @@ def build_parser():
     p_eval.add_argument("--config", required=True)
     p_eval.add_argument("--results", default="results")
 
-    p_cmp = sub.add_parser("compare", help="Summarize result JSONs in a directory")
+    p_cmp = sub.add_parser("compare", help="Summarize result JSONs as a benchmark table")
     p_cmp.add_argument("--results", default="results")
+
+    p_rep = sub.add_parser("report", help="Generate a markdown benchmark report")
+    p_rep.add_argument("--results", default="results")
+    p_rep.add_argument("--out", default="report.md")
 
     return parser
 
@@ -201,16 +205,25 @@ def evaluate_diarization(cfg):
 
 
 def cmd_compare(args):
-    records = read_results(args.results)
-    if not records:
+    from benchmark.analysis import aggregate, benchmark_table
+
+    rows = aggregate(args.results)
+    if not rows:
         print(f"no results found in {args.results}")
         return 0
-    models = [r.get("model", "?") for r in records]
-    si_sdr = [r.get("si_sdr") for r in records]
-    width = max(len(m) for m in models + ["model"])
-    print(f"{'model'.ljust(width)}  si_sdr")
-    for model, value in zip(models, si_sdr):
-        print(f"{model.ljust(width)}  {'-' if value is None else format(value, '.2f')}")
+    print(benchmark_table(rows))
+    return 0
+
+
+def cmd_report(args):
+    from benchmark.analysis import render_report, save_report
+
+    report = render_report(args.results)
+    out = Path(args.out)
+    if str(out.parent) != "":
+        out.parent.mkdir(parents=True, exist_ok=True)
+    save_report(report, out)
+    print(f"report written to {out}")
     return 0
 
 
@@ -263,6 +276,7 @@ COMMANDS = {
     "diarize": cmd_diarize,
     "evaluate": cmd_evaluate,
     "compare": cmd_compare,
+    "report": cmd_report,
 }
 
 
