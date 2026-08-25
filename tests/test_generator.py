@@ -259,16 +259,22 @@ class TestReverb:
 
         def late_energy(x):
             # after the 1 s clip ends: dry -> 0, small reverb decays faster
-            late = x[int(1.15 * SR):int(1.6 * SR)]
+            late = x[int(1.15 * SR) : int(1.6 * SR)]
             return float(np.sum(late**2))
 
         assert late_energy(big) > late_energy(small) > late_energy(dry) >= 0.0
 
     def test_metadata_records_reverb(self, clips_dir, tmp_path):
         path = generate_dataset(
-            clips_dir, output_dir=tmp_path / "rv", num_mixtures=1, durations=[3.0],
-            speaker_counts=[2], overlap_ratios=[0.25], snr_values=[None],
-            seed=13, reverb={"rt60": 0.35},
+            clips_dir,
+            output_dir=tmp_path / "rv",
+            num_mixtures=1,
+            durations=[3.0],
+            speaker_counts=[2],
+            overlap_ratios=[0.25],
+            snr_values=[None],
+            seed=13,
+            reverb={"rt60": 0.35},
         )
         import json
 

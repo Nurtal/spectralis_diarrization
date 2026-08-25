@@ -63,22 +63,28 @@ def main_run():
         for overlap in OVERLAPS:
             for snr in SNRS:
                 name = cell_name(num_speakers, overlap, snr)
-                manifest = generate_dataset(
-                    CLIPS,
-                    output_dir=BENCH_ROOT / name,
-                    num_mixtures=NUM_MIXTURES,
-                    durations=[DURATION],
-                    speaker_counts=[num_speakers],
-                    overlap_ratios=[overlap],
-                    snr_values=[snr],
-                    seed=hash(name) % 100000,
-                ) if not (BENCH_ROOT / name / "manifest.json").exists() else \
-                    BENCH_ROOT / name / "manifest.json"
+                manifest = (
+                    generate_dataset(
+                        CLIPS,
+                        output_dir=BENCH_ROOT / name,
+                        num_mixtures=NUM_MIXTURES,
+                        durations=[DURATION],
+                        speaker_counts=[num_speakers],
+                        overlap_ratios=[overlap],
+                        snr_values=[snr],
+                        seed=hash(name) % 100000,
+                    )
+                    if not (BENCH_ROOT / name / "manifest.json").exists()
+                    else BENCH_ROOT / name / "manifest.json"
+                )
 
                 runs = [
                     ("nmf", "nmf", {}),
-                    ("hybrid", "hybrid", {"diarizer": "oracle", "separator": "nmf",
-                                          "attribution": "spectral"}),
+                    (
+                        "hybrid",
+                        "hybrid",
+                        {"diarizer": "oracle", "separator": "nmf", "attribution": "spectral"},
+                    ),
                     ("neural", neural_model_name(num_speakers), {}),
                 ]
                 install_oracle_diarizer(manifest)
@@ -93,8 +99,7 @@ def main_run():
                         f"model:\n  name: {model}\n  params:\n{params_lines}"
                         f"dataset:\n  manifest: {manifest}\n"
                     )
-                    rc = main(["evaluate", "--config", str(cfg_path),
-                               "--results", str(RESULTS)])
+                    rc = main(["evaluate", "--config", str(cfg_path), "--results", str(RESULTS)])
                     print(f"[{name}] {prefix}: rc={rc}", file=sys.stderr)
     return 0
 

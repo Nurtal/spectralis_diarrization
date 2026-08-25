@@ -1033,15 +1033,47 @@ These are intentionally **not part of the initial benchmark**.
 
 # License
 
-TBD.
+Not licensed yet — all rights reserved until a license is chosen before any external release.
 
 ---
 
 ## Status
 
-🚧 **Research / Benchmark — Early Development**
+🚧 **Research / Benchmark — working benchmark, v0.1**
 
-The project is currently focused on building the dataset, baseline implementations and evaluation framework.
+All roadmap phases (M0-M7) have their core implemented; see
+[ROADMAP.md](ROADMAP.md) for the detailed per-phase status. Remaining work
+needs external resources: pyannote runs (HF token), TF-GridNet checkpoint,
+full experimental matrix on real corpora.
+
+### Implemented modules
+
+```text
+src/benchmark/
+├── audio.py               load/save/resample utilities
+├── interfaces.py          common Diarizer/Separator contracts (ADR-003)
+├── datasets.py            manifest-backed dataset with ground truth
+├── generator.py           synthetic mixtures: overlap, SNR, RIR reverb, seeds
+├── registry.py            model registries (diarizers/separators/encoders)
+├── metrics.py             DER/JER/overlap detection
+├── separation_metrics.py  SI-SDR + permutation pairing + SDR/SIR/SAR
+├── stft.py                STFT/iSTFT
+├── nmf_separator.py       classical NMF baseline
+├── neural_separator.py    SpeechBrain adapter (SepFormer validated)
+├── pyannote_diarizer.py   pyannote adapter (token-gated)
+├── speaker_encoder.py     ECAPA embeddings
+├── enrollment.py          enrollment policy from diarization
+├── hybrid.py              selective diarization+separation pipeline (ADR-005)
+├── studies.py             robustness curves (enrollment degradation)
+├── analysis.py            aggregation, tables, Pareto, reports
+└── cli.py                 diarize/separate/evaluate/compare/report
+```
+
+### Benchmark results so far
+
+First real-speech pass (LibriSpeech subset): SepFormer clearly leads blind NMF;
+hybrid selective pipelines inherit separator artifacts; see the Results table
+above and [data/benchmarks/](data/benchmarks/).
 
 ### Quick start
 

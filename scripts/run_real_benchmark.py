@@ -23,10 +23,16 @@ RUNS = [
     # (experiment prefix, model name, extra params)
     ("nmf", "nmf", {}),
     ("sepformer", "sepformer", {}),
-    ("hybrid_spectral", "hybrid", {"diarizer": "oracle", "separator": "nmf",
-                                   "attribution": "spectral"}),
-    ("hybrid_embedding", "hybrid", {"diarizer": "oracle", "separator": "nmf",
-                                    "attribution": "embedding", "encoder": "ecapa"}),
+    (
+        "hybrid_spectral",
+        "hybrid",
+        {"diarizer": "oracle", "separator": "nmf", "attribution": "spectral"},
+    ),
+    (
+        "hybrid_embedding",
+        "hybrid",
+        {"diarizer": "oracle", "separator": "nmf", "attribution": "embedding", "encoder": "ecapa"},
+    ),
 ]
 
 
@@ -57,9 +63,7 @@ def main_run():
         install_oracle_diarizer(manifest)
         for prefix, model, params in RUNS:
             cfg_path = BENCH_ROOT / f"cfg_{prefix}_ovl{overlap:02d}.yaml"
-            params_lines = "".join(
-                f"      {k}: {json.dumps(v)}\n" for k, v in params.items()
-            )
+            params_lines = "".join(f"      {k}: {json.dumps(v)}\n" for k, v in params.items())
             cfg_path.write_text(
                 f"name: {prefix}_ovl{overlap:02d}\n"
                 "seed: 0\n"

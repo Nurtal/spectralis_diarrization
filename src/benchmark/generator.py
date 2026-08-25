@@ -145,8 +145,9 @@ def _reverberate(audio, sample_rate, reverb, seed):
     return wet
 
 
-def generate_mixture(clips, num_speakers, duration, overlap_ratio, snr_db=None, seed=0,
-                     reverb=None):
+def generate_mixture(
+    clips, num_speakers, duration, overlap_ratio, snr_db=None, seed=0, reverb=None
+):
     """Generate one mixture. Returns a MixtureResult with exact ground truth."""
     rng = np.random.default_rng(seed)
     chosen = _pick(list(clips), num_speakers, rng)
@@ -173,8 +174,9 @@ def generate_mixture(clips, num_speakers, duration, overlap_ratio, snr_db=None, 
     segments = []
     for clip, audio, start in zip(chosen, loaded, starts):
         if reverb is not None:
-            audio = _reverberate(audio, chosen[0].sample_rate, reverb,
-                                 seed=int(rng.integers(2**31)))
+            audio = _reverberate(
+                audio, chosen[0].sample_rate, reverb, seed=int(rng.integers(2**31))
+            )
         buf = np.zeros(total_samples, dtype=np.float32)
         i0 = int(start * chosen[0].sample_rate)
         i1 = min(i0 + len(audio), total_samples)

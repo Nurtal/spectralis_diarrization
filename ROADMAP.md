@@ -4,7 +4,11 @@
 > The high-level vision lives in [README.md](README.md). This document defines the
 > execution order, the tasks, and the acceptance criteria for each phase.
 
-## Status
+# Status
+
+> Snapshot at v0.1.0: all phases have their core implemented; remaining items
+> are gated on external resources (HF token for pyannote, TF-GridNet
+> checkpoint, full matrix runs on real corpora).
 
 | Phase | Milestone | Status |
 |---|---|---|
@@ -13,9 +17,9 @@
 | Phase 2 — Diarization Baseline | M2 | 🟨 In progress (metrics + VAD + pyannote adapter done; viz + real pyannote runs pending) |
 | Phase 3 — Classical Separation | M3 | 🟨 In progress (STFT/NMF + SI-SDR/BSS metrics done; PESQ/STOI pending) |
 | Phase 4 — Neural Separation | M4 | 🟨 In progress (SepFormer validated end-to-end on CPU; TF-GridNet + full matrix pending) |
-| Phase 5 — Hybrid Pipelines | M5 | 🟨 In progress (pipeline + e2e eval done; matrix runs pending) |
+| Phase 5 — Hybrid Pipelines | M5 | 🟨 In progress (pipeline + e2e eval + first matrix cells done) |
 | Phase 6 — Speaker-Conditioned Separation | M6 | 🟨 In progress (encoder + enrollment + attribution comparison done; conditioned extraction model pending) |
-| Phase 7 — Benchmark Analysis | M7 | 🟨 In progress (first real-speech pass done; matrix + findings pending) |
+| Phase 7 — Benchmark Analysis | M7 | 🟨 In progress (tooling + real-speech pass + first matrix done; full findings pending) |
 
 Statuses: 🔲 not started · 🟨 in progress · ✅ done · ⏸️ blocked.
 

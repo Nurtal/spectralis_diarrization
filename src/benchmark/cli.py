@@ -111,7 +111,7 @@ def evaluate_hybrid(cfg):
     from benchmark.separation_metrics import bss_metrics, si_sdr
 
     dataset = ManifestDataset(cfg.dataset["manifest"])
-    params = (cfg.model.get("params") or {})
+    params = cfg.model.get("params") or {}
     diarizer = DIARIZERS[params.get("diarizer", "noop")](**params.get("diarizer_params", {}))
     separator = SEPARATORS[params.get("separator", "identity")](
         **params.get("separator_params", {})
