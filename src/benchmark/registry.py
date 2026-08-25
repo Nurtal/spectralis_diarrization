@@ -1,6 +1,7 @@
 """Model registries. Ships VAD baseline; pyannote registered when installed."""
 
 from benchmark.interfaces import Diarizer, Separator
+from benchmark.neural_separator import SpeechBrainSeparator
 from benchmark.nmf_separator import NMFSeparator
 from benchmark.pyannote_diarizer import PyannoteDiarizer
 from benchmark.vad import energy_vad
@@ -42,6 +43,22 @@ class EnergyVadDiarizer(Diarizer):
 SEPARATORS = {
     "identity": IdentitySeparator,
     "nmf": NMFSeparator,
+    # Neural separators (ADR-004: pretrained checkpoints). Constructors raise
+    # informative errors when speechbrain/torch are missing or the checkpoint
+    # is unavailable. Note: only SepFormer has official SpeechBrain checkpoints
+    # today; conv_tasnet/dprnn ids point to community models when they exist.
+    "sepformer": lambda **kw: SpeechBrainSeparator(
+        model_id=kw.pop("model_id", "speechbrain/sepformer-wsj02mix"), **kw
+    ),
+    "sepformer3": lambda **kw: SpeechBrainSeparator(
+        model_id=kw.pop("model_id", "speechbrain/sepformer-wsj03mix"), **kw
+    ),
+    "conv_tasnet": lambda **kw: SpeechBrainSeparator(
+        model_id=kw.pop("model_id", "speechbrain/ConvTasNet-Wham"), **kw
+    ),
+    "dprnn": lambda **kw: SpeechBrainSeparator(
+        model_id=kw.pop("model_id", "speechbrain/dprnn-wsj02mix"), **kw
+    ),
 }
 
 DIARIZERS = {

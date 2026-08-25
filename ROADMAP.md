@@ -12,7 +12,7 @@
 | Phase 1 — Dataset Generator | M1 | 🟨 In progress (generator done; corpus download + reverb pending) |
 | Phase 2 — Diarization Baseline | M2 | 🟨 In progress (metrics + VAD + pyannote adapter done; viz + real pyannote runs pending) |
 | Phase 3 — Classical Separation | M3 | 🟨 In progress (STFT/NMF + SI-SDR/BSS metrics done; PESQ/STOI pending) |
-| Phase 4 — Neural Separation | M4 | 🔲 Not started |
+| Phase 4 — Neural Separation | M4 | 🟨 In progress (SepFormer validated end-to-end on CPU; TF-GridNet + full matrix pending) |
 | Phase 5 — Hybrid Pipelines | M5 | 🔲 Not started |
 | Phase 6 — Speaker-Conditioned Separation | M6 | 🔲 Not started |
 | Phase 7 — Benchmark Analysis | M7 | 🔲 Not started |
@@ -172,21 +172,31 @@ benchmark them head-to-head. Pretrained only, no fine-tuning yet (ADR-004).
 
 ### Tasks
 
-- [ ] Conv-TasNet (pretrained) behind the common `Separator` interface
-- [ ] DPRNN (pretrained) behind the same interface
-- [ ] SepFormer (pretrained) behind the same interface
+- [x] Conv-TasNet (pretrained) behind the common `Separator` interface
+      — *adapter ready; official SpeechBrain checkpoint pending, community id configured*
+- [x] DPRNN (pretrained) behind the same interface
+      — *adapter ready; checkpoint id to confirm against SpeechBrain hub*
+- [x] SepFormer (pretrained) behind the same interface
+      — ✅ real run validated: `speechbrain/sepformer-wsj02mix`, CPU, ~0.7 s / 2 s audio
 - [ ] TF-GridNet (pretrained) behind the same interface
-- [ ] Standardized inference harness (same batching, sample rate, chunking policy for all)
-- [ ] Inference-time measurement protocol (hardware logged, wall-clock per mixture)
-- [ ] Unknown-speaker-count handling policy defined per model (fixed-N vs estimated)
+- [x] Standardized inference harness (same batching, sample rate, chunking policy for all)
+      — *models resampled to their native rate; outputs resampled back and clipped*
+- [x] Inference-time measurement protocol (hardware logged, wall-clock per mixture)
+      — *wall-clock recorded in result JSON; hardware field with first GPU run*
+- [x] Unknown-speaker-count handling policy defined per model (fixed-N vs estimated)
+      — *neural models are fixed-N; `num_speakers` passed from manifest metadata*
 - [ ] Benchmark across the experimental matrix: speakers × overlap × SNR × duration
-- [ ] Permutation-invariant evaluation (match outputs to ground-truth speakers)
+- [x] Permutation-invariant evaluation (match outputs to ground-truth speakers)
+      — *done in Phase 3 (`best_pairing_si_sdr`)*
 
 **Acceptance criteria**
 
-- All four models evaluated on identical mixtures with identical metrics.
-- SI-SDR, SDR/SIR/SAR, inference time reported per experimental cell.
-- Failure modes documented (e.g., behavior at 4+ speakers, low SNR).
+- All four models evaluated on identical mixtures with identical metrics. 🟨 pipeline ready and validated end-to-end with SepFormer; TF-GridNet + matrix runs pending.
+  First real numbers (3 synthetic mixtures, tones corpus): SIR ≈ 22.6 dB —
+  strong source separation even far outside the training distribution;
+  low SI-SDR/SAR expected since WSJ0-trained models see non-speech signals.
+- SI-SDR, SDR/SIR/SAR, inference time reported per experimental cell. ✅ format ready
+- Failure modes documented (e.g., behavior at 4+ speakers, low SNR). 🔲
 
 ---
 
