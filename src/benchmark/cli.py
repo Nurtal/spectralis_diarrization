@@ -35,6 +35,13 @@ def build_parser():
     p_rep.add_argument("--results", default="results")
     p_rep.add_argument("--out", default="report.md")
 
+    p_viz = sub.add_parser("visualize", help="Generate diarization timeline + overlap viz")
+    p_viz.add_argument("--manifest", required=True, help="Path to manifest.json")
+    p_viz.add_argument("--diarizer", default="vad", help="Diarizer name (vad/noop/pyannote)")
+    p_viz.add_argument("--out", default="viz", help="Output directory for PNGs")
+    p_viz.add_argument("--num-samples", type=int, default=3, help="How many mixtures to sample")
+    p_viz.add_argument("--seed", type=int, default=0, help="Random seed for sampling")
+
     return parser
 
 
@@ -227,6 +234,75 @@ def cmd_report(args):
     return 0
 
 
+def cmd_visualize(args):
+    """Sample mixtures, run diarizer, emit timeline + heatmap + DER breakdown."""
+    from benchmark.datasets import ManifestDataset
+    from benchmark.metrics import der, overlap_detection_scores
+    from benchmark.plots import plot_der_breakdown, plot_diarization_timeline, plot_overlap_heatmap
+
+    if args.diarizer not in DIARIZERS:
+        available = ", ".join(DIARIZERS)
+        print(
+            f"error: unknown diarizer '{args.diarizer}' (available: {available})", file=sys.stderr
+        )
+        return 2
+
+    dataset = ManifestDataset(args.manifest)
+    if len(dataset) == 0:
+        print(f"error: manifest contains no mixtures: {args.manifest}", file=sys.stderr)
+        return 2
+
+    import numpy as np
+
+    rng = np.random.default_rng(int(args.seed))
+    n = min(int(args.num_samples), len(dataset))
+    indices = (
+        sorted(rng.choice(len(dataset), size=n, replace=False).tolist())
+        if n < len(dataset)
+        else list(range(n))
+    )
+
+    diarizer = DIARIZERS[args.diarizer]()
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    breakdown = []
+    for idx in indices:
+        mixture = dataset[idx]
+        audio, sr = mixture.load_mixture()
+        reference = list(mixture.segments)
+        hypothesis = diarizer.diarize(audio, sr)
+
+        scores = der(reference, hypothesis)
+        ov = overlap_detection_scores(reference, hypothesis)
+        title = (
+            f"{mixture.mixture_id} — DER {scores['der']:.2f} "
+            f"(FA {scores['false_alarm']:.1f}s miss {scores['missed']:.1f}s "
+            f"conf {scores['confusion']:.1f}s) — ov F1 {ov['f1']:.2f}"
+        )
+
+        tl_path = out_dir / f"timeline_{mixture.mixture_id}.png"
+        hm_path = out_dir / f"overlap_{mixture.mixture_id}.png"
+        plot_diarization_timeline(reference, hypothesis, tl_path, title=title)
+        plot_overlap_heatmap(reference, hypothesis, hm_path, title=title)
+        breakdown.append(
+            {
+                "label": mixture.mixture_id,
+                "missed": scores["missed"],
+                "false_alarm": scores["false_alarm"],
+                "confusion": scores["confusion"],
+                "der": scores["der"],
+            }
+        )
+        print(f"viz {mixture.mixture_id} -> {tl_path.name}, {hm_path.name}")
+
+    bd_path = out_dir / "der_breakdown.png"
+    plot_der_breakdown(breakdown, bd_path, title=f"DER breakdown ({args.diarizer}, n={n})")
+    print(f"DER breakdown -> {bd_path}")
+    print(f"visualizations written to {out_dir} ({n} samples, seed={args.seed})")
+    return 0
+
+
 def evaluate_separation(cfg):
     """Run a registered separator over a manifest dataset and score SI-SDR/BSS."""
     import time
@@ -277,6 +353,7 @@ COMMANDS = {
     "evaluate": cmd_evaluate,
     "compare": cmd_compare,
     "report": cmd_report,
+    "visualize": cmd_visualize,
 }
 
 

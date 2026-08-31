@@ -14,7 +14,7 @@
 |---|---|---|
 | Phase 0 — Project Infrastructure | M0 | ✅ Done (2026-08-25) |
 | Phase 1 — Dataset Generator | M1 | ✅ Done (2026-08-25) |
-| Phase 2 — Diarization Baseline | M2 | 🟨 In progress (metrics + VAD + pyannote adapter done; viz + real pyannote runs pending) |
+| Phase 2 — Diarization Baseline | M2 | 🟨 In progress (metrics + VAD + pyannote adapter + viz done; real pyannote runs pending) |
 | Phase 3 — Classical Separation | M3 | 🟨 In progress (STFT/NMF + SI-SDR/BSS metrics done; PESQ/STOI pending) |
 | Phase 4 — Neural Separation | M4 | 🟨 In progress (SepFormer validated end-to-end on CPU; TF-GridNet + full matrix pending) |
 | Phase 5 — Hybrid Pipelines | M5 | 🟨 In progress (pipeline + e2e eval + first matrix cells done) |
@@ -130,13 +130,16 @@ overlap degrades diarization. Establishes the baseline all pipelines improve on.
 - [x] JER evaluation
 - [x] Overlap-region detection accuracy (precision/recall/F1 on overlap spans)
 - [x] Speaker confusion analysis (DER decomposition: FA / missed / confusion seconds)
-- [ ] Visualization tools (timeline plots: ground truth vs hypothesis, overlap heatmaps)
+- [x] Visualization tools (timeline plots: ground truth vs hypothesis, overlap heatmaps)
+      — ✅ `plots.plot_diarization_timeline` (GT vs HYP per-speaker lanes, overlap hatched),
+        `plot_overlap_heatmap` (binary overlap P/R/F1), `plot_der_breakdown` (bonus stacked FA/missed/confusion);
+        CLI `python -m benchmark visualize --manifest ... --diarizer ... --out viz/ --num-samples 3 --seed 0`
 
 **Acceptance criteria**
 
 - DER/JER reported for at least {2 spk × overlap 0/25/50/75 %} configurations. ✅ pipeline validated end-to-end with the VAD baseline; real numbers await pyannote runs.
 - Results stored as JSON per experiment (model version, seed, hardware recorded). ✅ JSON contract; hardware field to be added with first GPU run.
-- Timeline visualizations generated automatically for a sample of mixtures. 🔲
+- Timeline visualizations generated automatically for a sample of mixtures. ✅ `visualize` samples N mixtures seed-wise, emits `timeline_*.png` + `overlap_*.png` + `der_breakdown.png`
 
 ---
 

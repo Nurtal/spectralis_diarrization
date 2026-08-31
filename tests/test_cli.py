@@ -26,7 +26,7 @@ class TestHelp:
             text=True,
         )
         assert proc.returncode == 0
-        for cmd in ("diarize", "separate", "evaluate", "compare"):
+        for cmd in ("diarize", "separate", "evaluate", "compare", "report", "visualize"):
             assert cmd in proc.stdout
 
 
@@ -110,3 +110,108 @@ class TestReport:
         content = out.read_text()
         assert "# Benchmark Report" in content
         assert "RQ" in content
+
+
+class TestVisualize:
+    def test_generates_timeline_and_heatmap(self, tmp_path):
+        pytest.importorskip("matplotlib")
+        # build a tiny manifest with 2 mixtures
+        sr = 8000
+        rng = np.random.default_rng(1)
+
+        def _wav(name, dur_s=2.0):
+            p = tmp_path / name
+            save_audio(p, rng.uniform(-0.1, 0.1, int(sr * dur_s)).astype(np.float32), sr)
+            return p
+
+        _wav("mix0.wav")
+        _wav("srcA0.wav")
+        _wav("srcB0.wav")
+        _wav("mix1.wav")
+        _wav("srcA1.wav")
+        _wav("srcB1.wav")
+
+        manifest = {
+            "version": "test-v1",
+            "sample_rate": sr,
+            "mixtures": [
+                {
+                    "id": "mix_000",
+                    "mixture": "mix0.wav",
+                    "sources": ["srcA0.wav", "srcB0.wav"],
+                    "segments": [
+                        {"start": 0.0, "end": 1.0, "speaker": "A"},
+                        {"start": 0.8, "end": 2.0, "speaker": "B"},
+                    ],
+                    "metadata": {"num_speakers": 2},
+                },
+                {
+                    "id": "mix_001",
+                    "mixture": "mix1.wav",
+                    "sources": ["srcA1.wav", "srcB1.wav"],
+                    "segments": [
+                        {"start": 0.0, "end": 2.0, "speaker": "A"},
+                    ],
+                    "metadata": {"num_speakers": 1},
+                },
+            ],
+        }
+        (tmp_path / "manifest.json").write_text(json.dumps(manifest))
+        out_dir = tmp_path / "viz"
+        rc = main(
+            [
+                "visualize",
+                "--manifest",
+                str(tmp_path / "manifest.json"),
+                "--diarizer",
+                "vad",
+                "--out",
+                str(out_dir),
+                "--num-samples",
+                "2",
+                "--seed",
+                "0",
+            ]
+        )
+        assert rc == 0
+        # 2 timelines + 2 heatmaps + 1 breakdown = 5 pngs
+        pngs = list(out_dir.glob("*.png"))
+        assert len(pngs) == 5
+        assert (out_dir / "timeline_mix_000.png").exists()
+        assert (out_dir / "overlap_mix_001.png").exists()
+        assert (out_dir / "der_breakdown.png").exists()
+        for p in pngs:
+            assert p.stat().st_size > 0
+
+    def test_unknown_diarizer_fails(self, tmp_path, capsys):
+        # minimal manifest to hit diarizer check first
+        sr = 8000
+        p = tmp_path / "mix.wav"
+        save_audio(p, np.zeros(8000, dtype=np.float32), sr)
+        manifest = {
+            "version": "test-v1",
+            "sample_rate": sr,
+            "mixtures": [
+                {
+                    "id": "mix_000",
+                    "mixture": "mix.wav",
+                    "sources": ["mix.wav"],
+                    "segments": [],
+                    "metadata": {},
+                }
+            ],
+        }
+        (tmp_path / "manifest.json").write_text(json.dumps(manifest))
+        rc = main(
+            [
+                "visualize",
+                "--manifest",
+                str(tmp_path / "manifest.json"),
+                "--diarizer",
+                "nope",
+                "--out",
+                str(tmp_path / "out"),
+            ]
+        )
+        assert rc != 0
+        assert "nope" in capsys.readouterr().err
