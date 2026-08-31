@@ -1,0 +1,7 @@
+name: neural_4spk_ovl00_clean
+seed: 0
+model:
+  name: tf_gridnet
+  params:
+dataset:
+  manifest: data/benchmarks/matrix_v1/4spk_ovl00_clean/manifest.json

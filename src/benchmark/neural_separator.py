@@ -17,6 +17,11 @@ class SpeechBrainSeparator(Separator):
 
     Pass `model=` (any object with `separate_batch(waveform) -> [1, T, N]`)
     for testing, or `model_id=` to download a HuggingFace checkpoint.
+
+    ``model_class`` selects the SpeechBrain inference class:
+
+    - ``sepformer`` (default) → ``SepformerSeparation``
+    - ``tfgridnet`` → ``TFGridNetSeparation`` (when available)
     """
 
     def __init__(
@@ -26,14 +31,33 @@ class SpeechBrainSeparator(Separator):
         model_sample_rate=DEFAULT_MODEL_SAMPLE_RATE,
         device="cpu",
         hf_token=None,
+        model_class="sepformer",
     ):
         if model is not None:
             self._model = model
             self.model_sample_rate = int(getattr(model, "sample_rate", model_sample_rate))
             return
 
+        # resolve inference class
+        model_class = str(model_class).lower()
         try:
-            from speechbrain.inference.separation import SepformerSeparation
+            if model_class in ("sepformer", "sepformer3", "conv_tasnet", "dprnn"):
+                from speechbrain.inference.separation import SepformerSeparation as SepClass
+            elif model_class in ("tfgridnet", "tf_gridnet", "tf-gridnet"):
+                try:
+                    from speechbrain.inference.separation import TFGridNetSeparation as SepClass
+                except ImportError as e:
+                    raise RuntimeError(
+                        "TF-GridNet is not available in the installed SpeechBrain "
+                        f"({e}). The adapter is ready (ADR-004) but requires a newer "
+                        "SpeechBrain or a community checkpoint. Pass model_class='sepformer' "
+                        "with a TF-GridNet checkpoint if the hub id is compatible, or "
+                        "install a SpeechBrain build that exposes TFGridNetSeparation."
+                    ) from e
+            else:
+                raise ValueError(
+                    f"unknown model_class '{model_class}' (expected sepformer|tfgridnet)"
+                )
         except ImportError as e:
             raise RuntimeError(
                 "speechbrain is not installed. Install it with "
@@ -53,7 +77,7 @@ class SpeechBrainSeparator(Separator):
         # override keeps SpeechBrain from probing CUDA.
         if device == "cpu":
             os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
-        self._model = SepformerSeparation.from_hparams(
+        self._model = SepClass.from_hparams(
             source=model_id,
             savedir=savedir,
             run_opts={"device": device},

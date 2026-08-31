@@ -32,8 +32,25 @@ class FakeModel:
 
 class TestSpeechBrainSeparator:
     def test_registered_under_model_names(self):
-        for name in ("sepformer", "conv_tasnet", "dprnn"):
+        for name in ("sepformer", "conv_tasnet", "dprnn", "tf_gridnet", "tfgridnet"):
             assert name in SEPARATORS
+
+    def test_tf_gridnet_injected_model(self):
+        sep = SEPARATORS["tf_gridnet"](model=FakeModel())
+        sr = 16000
+        audio = np.zeros(sr // 2, dtype=np.float32)
+        sources = sep.separate(audio, sr)
+        assert len(sources) == 2
+
+    def test_tf_gridnet_reports_missing_checkpoint_gracefully(self):
+        # When no injected model and the hub id is not reachable,
+        # the adapter should raise a clear RuntimeError (not a raw ImportError)
+        # For the current SpeechBrain 1.1.0, TFGridNetSeparation itself is missing,
+        # so we expect the TF-GridNet-specific message.
+        if not speechbrain_available():
+            pytest.skip("speechbrain not installed")
+        with pytest.raises(RuntimeError, match="TF-GridNet"):
+            SEPARATORS["tf_gridnet"]()
 
     @pytest.mark.skipif(speechbrain_available(), reason="speechbrain installed")
     def test_helpful_error_when_missing(self):

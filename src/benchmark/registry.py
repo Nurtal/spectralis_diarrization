@@ -47,21 +47,38 @@ SEPARATORS = {
     # Neural separators (ADR-004: pretrained checkpoints). Force CPU due to old CUDA driver.
     "sepformer": lambda **kw: SpeechBrainSeparator(
         model_id=kw.pop("model_id", "speechbrain/sepformer-wsj02mix"),
+        model_class=kw.pop("model_class", "sepformer"),
         device=kw.pop("device", "cpu"),
         **kw,
     ),
     "sepformer3": lambda **kw: SpeechBrainSeparator(
         model_id=kw.pop("model_id", "speechbrain/sepformer-wsj03mix"),
+        model_class=kw.pop("model_class", "sepformer"),
         device=kw.pop("device", "cpu"),
         **kw,
     ),
     "conv_tasnet": lambda **kw: SpeechBrainSeparator(
         model_id=kw.pop("model_id", "speechbrain/ConvTasNet-Wham"),
+        model_class=kw.pop("model_class", "sepformer"),
         device=kw.pop("device", "cpu"),
         **kw,
     ),
     "dprnn": lambda **kw: SpeechBrainSeparator(
         model_id=kw.pop("model_id", "speechbrain/dprnn-wsj02mix"),
+        model_class=kw.pop("model_class", "sepformer"),
+        device=kw.pop("device", "cpu"),
+        **kw,
+    ),
+    "tf_gridnet": lambda **kw: SpeechBrainSeparator(
+        model_id=kw.pop("model_id", "espnet/tf_gridnet_wsj0_2mix"),
+        model_class=kw.pop("model_class", "tfgridnet"),
+        device=kw.pop("device", "cpu"),
+        **kw,
+    ),
+    # alias without underscore
+    "tfgridnet": lambda **kw: SpeechBrainSeparator(
+        model_id=kw.pop("model_id", "espnet/tf_gridnet_wsj0_2mix"),
+        model_class=kw.pop("model_class", "tfgridnet"),
         device=kw.pop("device", "cpu"),
         **kw,
     ),

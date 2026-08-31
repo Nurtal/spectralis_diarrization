@@ -1,0 +1,7 @@
+name: nmf_4spk_ovl00_clean
+seed: 0
+model:
+  name: nmf
+  params:
+dataset:
+  manifest: data/benchmarks/matrix_v1/4spk_ovl00_clean/manifest.json

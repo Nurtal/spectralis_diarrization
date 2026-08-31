@@ -2,12 +2,12 @@
 
 ## Results
 
-| Model | si_sdr ↑ | sdr ↑ | sir ↑ | sar ↑ | der ↓ | jer ↓ |
-|---|---|---|---|---|---|---|
-| hybrid | -4.31 | -4.31 | 92.47 | -4.31 | - | - |
-| nmf | -2.62 | -2.62 | 0.77 | 4.88 | - | - |
-| sepformer | 1.42 | 1.42 | 26.93 | 1.52 | - | - |
-| sepformer3 | 0.21 | 0.21 | 14.52 | 1.55 | - | - |
+| Model | si_sdr ↑ | sdr ↑ | sir ↑ | sar ↑ | pesq ↑ | stoi ↑ | der ↓ | jer ↓ |
+|---|---|---|---|---|---|---|---|---|
+| hybrid | -4.31 | -4.31 | 92.47 | -4.31 | - | - | - | - |
+| nmf | -2.84 | -2.84 | 0.59 | 4.81 | 1.87 | 0.69 | - | - |
+| sepformer | 0.98 | 0.98 | 24.11 | 1.94 | 1.36 | 0.87 | - | - |
+| sepformer3 | 0.21 | 0.21 | 14.52 | 1.55 | - | - | - | - |
 
 ## Quality / cost Pareto (SI-SDR vs runtime)
 
@@ -21,7 +21,7 @@ _No runtime data recorded yet._
 | hybrid | hybrid_3spk_ovl50_10db | -13.67 |
 | hybrid | hybrid_3spk_ovl50_clean | -8.23 |
 | hybrid | hybrid_3spk_ovl50_clean | -8.23 |
-| nmf | nmf_3spk_ovl50_clean | -4.97 |
+| nmf | nmf_4spk_ovl00_clean | -5.50 |
 
 ## Research questions
 

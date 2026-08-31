@@ -1,0 +1,7 @@
+name: nmf_2spk_ovl00_clean_dur30s_rvb04
+seed: 0
+model:
+  name: nmf
+  params:
+dataset:
+  manifest: data/benchmarks/matrix_v1/2spk_ovl00_clean_dur30s_rvb04/manifest.json
