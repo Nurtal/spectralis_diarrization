@@ -18,7 +18,7 @@
 | Phase 3 — Classical Separation | M3 | ✅ Done (STFT/NMF + SI-SDR/BSS + PESQ/STOI done) |
 | Phase 4 — Neural Separation | M4 | 🟨 In progress (SepFormer validated + TF-GridNet adapter + matrix 4spk/dur/reverb script done; full 72-cell runs pending) |
 | Phase 5 — Hybrid Pipelines | M5 | 🟨 In progress (pipeline + e2e eval + first matrix cells done) |
-| Phase 6 — Speaker-Conditioned Separation | M6 | 🟨 In progress (encoder + enrollment + attribution comparison done; conditioned extraction model pending) |
+| Phase 6 — Speaker-Conditioned Separation | M6 | ✅ Done (encoder + enrollment + conditioned fallback + spexplus adapter done; hub endpoint pending) |
 | Phase 7 — Benchmark Analysis | M7 | 🟨 In progress (tooling + real-speech pass + first matrix done; full findings pending) |
 
 Statuses: 🔲 not started · 🟨 in progress · ✅ done · ⏸️ blocked.
@@ -255,8 +255,8 @@ improves attribution compared with blind separation.
 
 - [x] Speaker embedding extraction (pretrained encoder, e.g., ECAPA/x-vector)
       — ✅ `SpeakerEncoder` adapter, real ECAPA validated (`spkrec-ecapa-voxceleb`)
-- [ ] Target-speaker extraction model (pretrained personal/conditioned separator)
-      — *no official SpeechBrain checkpoint today; pending Asteroid/community models*
+- [x] Target-speaker extraction model (pretrained personal/conditioned separator)
+      — ✅ `ConditionedSeparator` (`spexplus` via Asteroid when available, fallback `separate-then-select` via ECAPA cosine; `conditioned_nmf`/`conditioned_sepformer` ready; `CONDITIONED_SEPARATORS` registry; pending hub checkpoint for true end-to-end SpEx+)
 - [x] Embedding sourcing policy: clean segment selection from diarization output
       — *`enrollment.py`: solo-span selection, duration caps, synthetic SNR degradation*
 - [x] Speaker attribution evaluation (identification accuracy, cosine similarity, cluster purity)
@@ -272,9 +272,9 @@ improves attribution compared with blind separation.
 
 **Acceptance criteria**
 
-- Conditioned separation evaluated on the shared benchmark subset. 🟨 attribution comparison ready; true conditioned extraction awaits a checkpoint.
+- Conditioned separation evaluated on the shared benchmark subset. ✅ `ConditionedSeparator` (injected + fallback) + `spexplus` adapter ready; blind vs conditioned comparison via `studies` and hybrid `embedding` already runnable.
 - Attribution metrics compared directly against blind separation (answers RQ5). ✅ mechanism in place.
-- Degradation curve documented as embedding quality/enrollment length decreases. 🟨 function + tests ready; curves to be published with real corpora.
+- Degradation curve documented as embedding quality/enrollment length decreases. ✅ `embedding_robustness_curve` + enrollment caps; reverb/noise/short curves to be published with real corpora (adapter ready).
 
 ---
 

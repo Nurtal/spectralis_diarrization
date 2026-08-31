@@ -1,5 +1,6 @@
 """Model registries. Ships VAD baseline; pyannote registered when installed."""
 
+from benchmark.conditioned_separator import ConditionedSeparator
 from benchmark.interfaces import Diarizer, Separator
 from benchmark.neural_separator import SpeechBrainSeparator
 from benchmark.nmf_separator import NMFSeparator
@@ -94,4 +95,36 @@ DIARIZERS = {
 
 ENCODERS = {
     "ecapa": SpeakerEncoder,
+}
+
+# Target-speaker extraction (conditioned on enrollment, ADR-006, M6)
+# Separate registry because the interface requires enrollment audio.
+CONDITIONED_SEPARATORS = {
+    "spexplus": lambda **kw: ConditionedSeparator(
+        model_id=kw.pop("model_id", "JorisCos/SpExPlus-Libri2Mix"),
+        model_class=kw.pop("model_class", "spexplus"),
+        separator=kw.pop("separator", None),
+        encoder=kw.pop("encoder", None),
+        device=kw.pop("device", "cpu"),
+        **kw,
+    ),
+    "conditioned_nmf": lambda **kw: ConditionedSeparator(
+        model_id=kw.pop("model_id", None),
+        model_class="fallback",
+        separator=kw.pop("separator", None) or NMFSeparator(),
+        encoder=kw.pop("encoder", None),
+        device=kw.pop("device", "cpu"),
+        **kw,
+    ),
+    "conditioned_sepformer": lambda **kw: ConditionedSeparator(
+        model_id=kw.pop("model_id", None),
+        model_class="fallback",
+        separator=kw.pop(
+            "separator",
+            SpeechBrainSeparator(model_id="speechbrain/sepformer-wsj02mix", device="cpu"),
+        ),
+        encoder=kw.pop("encoder", None),
+        device=kw.pop("device", "cpu"),
+        **kw,
+    ),
 }
