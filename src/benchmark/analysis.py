@@ -4,7 +4,7 @@ from pathlib import Path
 
 from benchmark.results import read_results
 
-TABLE_METRICS = ("si_sdr", "sdr", "sir", "sar", "der", "jer")
+TABLE_METRICS = ("si_sdr", "sdr", "sir", "sar", "pesq", "stoi", "der", "jer")
 
 
 def aggregate(results_dir):

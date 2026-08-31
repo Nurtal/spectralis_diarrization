@@ -1,8 +1,12 @@
-"""Source separation metrics: SI-SDR and simplified SDR/SIR/SAR.
+"""Source separation metrics: SI-SDR, SDR/SIR/SAR, PESQ/STOI.
 
 The BSS metrics use the bss_eval decomposition without distortion filters:
 estimate = s_target + e_interference + e_artifacts, where projections are
 plain least-squares onto the reference subspace.
+
+PESQ/STOI are optional speech-quality metrics (wideband 16 kHz only for PESQ,
+per ADR-007). They require ``pesq`` and ``pystoi`` (``uv sync --group quality``)
+and degrade gracefully when the libraries are missing.
 """
 
 import numpy as np
@@ -103,3 +107,114 @@ def bss_metrics(references, estimates, pairing=None):
         "sir": float(np.mean(sir_values)),
         "sar": float(np.mean(sar_values)),
     }
+
+
+def _pesq_available():
+    try:
+        import pesq  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def _stoi_available():
+    try:
+        import pystoi  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def pesq_score(reference, estimate, sample_rate=16000):
+    """PESQ wideband (MOS 1.0–4.5) for a single pair. Requires 16 kHz.
+
+    Raises ``RuntimeError`` when the ``pesq`` package is missing and
+    ``ValueError`` for unsupported sample rates.
+    """
+    if int(sample_rate) != 16000:
+        raise ValueError("pesq_score only supports sample_rate=16000 (wideband) for T2")
+    if not _pesq_available():
+        raise RuntimeError(
+            "pesq is not installed. Install it with `uv sync --group quality` "
+            "(or `pip install pesq`)."
+        )
+    from pesq import pesq as pesq_fn
+
+    ref = np.asarray(reference, dtype=np.float64)
+    est = np.asarray(estimate, dtype=np.float64)
+    if ref.ndim != 1 or est.ndim != 1:
+        raise ValueError("reference and estimate must be 1D waveforms")
+    n = min(len(ref), len(est))
+    if n == 0:
+        raise ValueError("reference and estimate must be non-empty")
+    ref = ref[:n]
+    est = est[:n]
+    # PESQ requires at least ~0.25 s; let the library raise a clear error
+    # if the signal is too short, but provide a nicer message for empty
+    return float(pesq_fn(int(sample_rate), ref, est, "wb"))
+
+
+def stoi_score(reference, estimate, sample_rate=16000):
+    """STOI (0–1) for a single pair. Supports any rate via pystoi, but 16 kHz is the T2 default."""
+    if not _stoi_available():
+        raise RuntimeError(
+            "pystoi is not installed. Install it with `uv sync --group quality` "
+            "(or `pip install pystoi`)."
+        )
+    from pystoi import stoi as stoi_fn
+
+    ref = np.asarray(reference, dtype=np.float64)
+    est = np.asarray(estimate, dtype=np.float64)
+    if ref.ndim != 1 or est.ndim != 1:
+        raise ValueError("reference and estimate must be 1D waveforms")
+    n = min(len(ref), len(est))
+    if n == 0:
+        raise ValueError("reference and estimate must be non-empty")
+    ref = ref[:n]
+    est = est[:n]
+    return float(stoi_fn(ref, est, int(sample_rate), extended=False))
+
+
+def speech_quality_metrics(references, estimates, sample_rate=16000, pairing=None):
+    """Mean PESQ/STOI over optimally paired sources (permutation-invariant).
+
+    Returns ``{}`` when neither ``pesq`` nor ``pystoi`` is installed, or
+    ``{\"pesq\": ..., \"stoi\": ...}`` with only the available keys.
+    Pairing is derived from SI-SDR when not supplied, matching ``bss_metrics``.
+    """
+    if not _pesq_available() and not _stoi_available():
+        return {}
+    n = min(len(references), len(estimates))
+    if n == 0:
+        return {}
+
+    if pairing is None:
+        cost = np.array([[si_sdr(r, e) for e in estimates] for r in references])
+        row, col = linear_sum_assignment(-cost)
+        pairing = {int(j): int(i) for i, j in zip(row, col)}
+
+    pesq_vals, stoi_vals = [], []
+    for est_idx in sorted(pairing)[:n]:
+        ref_idx = pairing[est_idx]
+        ref = references[ref_idx]
+        est = estimates[est_idx]
+        if _pesq_available():
+            try:
+                pesq_vals.append(pesq_score(ref, est, sample_rate))
+            except Exception:
+                # e.g. too short, unsupported rate — skip this pair
+                pass
+        if _stoi_available():
+            try:
+                stoi_vals.append(stoi_score(ref, est, sample_rate))
+            except Exception:
+                pass
+
+    result = {}
+    if pesq_vals:
+        result["pesq"] = float(np.mean(pesq_vals))
+    if stoi_vals:
+        result["stoi"] = float(np.mean(stoi_vals))
+    return result

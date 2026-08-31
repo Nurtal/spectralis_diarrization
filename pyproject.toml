@@ -23,6 +23,10 @@ neural = [
 viz = [
     "matplotlib>=3.8",
 ]
+quality = [
+    "pesq>=0.0.4",
+    "pystoi>=0.4.1",
+]
 
 [build-system]
 requires = ["hatchling"]

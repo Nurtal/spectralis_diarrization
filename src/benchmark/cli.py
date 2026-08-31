@@ -136,6 +136,8 @@ def evaluate_hybrid(cfg):
     )
 
     totals = {"si_sdr": 0.0, "sdr": 0.0, "sir": 0.0, "sar": 0.0}
+    pesq_total = stoi_total = 0.0
+    pesq_n = stoi_n = 0
     selective_total = full_total = 0.0
     n = 0
     for mixture in dataset:
@@ -155,12 +157,40 @@ def evaluate_hybrid(cfg):
             bss = bss_metrics([reference], [result.tracks[spk]])
             for key in ("sdr", "sir", "sar"):
                 totals[key] += bss[key]
+            # optional speech quality (wideband 16 kHz, PESQ/STOI)
+            try:
+                from benchmark.separation_metrics import (
+                    _pesq_available,
+                    _stoi_available,
+                    pesq_score,
+                    stoi_score,
+                )
+
+                est = result.tracks[spk]
+                if _pesq_available() and int(sr) == 16000:
+                    try:
+                        pesq_total += pesq_score(reference, est, 16000)
+                        pesq_n += 1
+                    except Exception:
+                        pass
+                if _stoi_available():
+                    try:
+                        stoi_total += stoi_score(reference, est, int(sr))
+                        stoi_n += 1
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
         selective_total += result.selective_time
         full_total += result.full_time if result.full_time is not None else 0.0
         n += 1
 
     metrics = {k: v / n for k, v in totals.items()} if n else dict(totals)
+    if pesq_n:
+        metrics["pesq"] = pesq_total / pesq_n
+    if stoi_n:
+        metrics["stoi"] = stoi_total / stoi_n
     metrics.update(
         selective_time_seconds=selective_total,
         full_time_seconds=full_total,
@@ -304,16 +334,22 @@ def cmd_visualize(args):
 
 
 def evaluate_separation(cfg):
-    """Run a registered separator over a manifest dataset and score SI-SDR/BSS."""
+    """Run a registered separator over a manifest dataset and score SI-SDR/BSS + PESQ/STOI."""
     import time
 
     from benchmark.datasets import ManifestDataset
-    from benchmark.separation_metrics import best_pairing_si_sdr, bss_metrics
+    from benchmark.separation_metrics import (
+        best_pairing_si_sdr,
+        bss_metrics,
+        speech_quality_metrics,
+    )
 
     dataset = ManifestDataset(cfg.dataset["manifest"])
     separator = SEPARATORS[cfg.model["name"]](**(cfg.model.get("params") or {}))
 
     totals = {"si_sdr": 0.0, "sdr": 0.0, "sir": 0.0, "sar": 0.0}
+    q_totals = {"pesq": 0.0, "stoi": 0.0}
+    q_counts = {"pesq": 0, "stoi": 0}
     inference_time = 0.0
     n = 0
     for mixture in dataset:
@@ -332,9 +368,21 @@ def evaluate_separation(cfg):
         bss = bss_metrics(references, estimates)
         for key in ("sdr", "sir", "sar"):
             totals[key] += bss[key]
+        # optional speech quality (wideband)
+        try:
+            q = speech_quality_metrics(references, estimates, sample_rate=int(sr))
+            for k in ("pesq", "stoi"):
+                if k in q:
+                    q_totals[k] += q[k]
+                    q_counts[k] += 1
+        except Exception:
+            pass
         n += 1
 
     metrics = {k: v / n for k, v in totals.items()} if n else dict(totals)
+    for k in ("pesq", "stoi"):
+        if q_counts[k]:
+            metrics[k] = q_totals[k] / q_counts[k]
     metrics.update(inference_time_seconds=inference_time, num_mixtures=n)
     return {
         "experiment": cfg.name,

@@ -1,7 +1,14 @@
 import numpy as np
 import pytest
 
-from benchmark.separation_metrics import best_pairing_si_sdr, bss_metrics, si_sdr
+from benchmark.separation_metrics import (
+    best_pairing_si_sdr,
+    bss_metrics,
+    pesq_score,
+    si_sdr,
+    speech_quality_metrics,
+    stoi_score,
+)
 
 
 def tone(freq, dur_s, sr=8000, amp=0.3):
@@ -90,3 +97,57 @@ class TestBssMetrics:
         b = tone(1500.0, 0.2)
         m = bss_metrics([a, b], [a.copy(), b.copy()])
         assert set(m) == {"sdr", "sir", "sar"}
+
+
+class TestSpeechQuality:
+    def test_pesq_perfect_is_high(self):
+        pytest.importorskip("pesq")
+        ref = tone(440.0, 1.0, sr=16000)
+        # PESQ WB 1.0–4.5, perfect copy ~4.5
+        assert pesq_score(ref, ref.copy(), sample_rate=16000) > 4.0
+
+    def test_stoi_perfect_is_one(self):
+        pytest.importorskip("pystoi")
+        ref = tone(440.0, 1.0, sr=16000)
+        assert stoi_score(ref, ref.copy(), sample_rate=16000) == pytest.approx(1.0, abs=0.02)
+
+    def test_quality_degrades_with_noise(self):
+        pesq_available = pytest.importorskip("pesq", reason="pesq not installed")  # noqa: F841
+        pytest.importorskip("pystoi")
+        rng = np.random.default_rng(0)
+        ref = tone(440.0, 1.0, sr=16000)
+        noise = rng.normal(0, 0.05, len(ref)).astype(np.float32)
+        noisy = (ref + noise).astype(np.float32)
+        clean_pesq = pesq_score(ref, ref.copy(), sample_rate=16000)
+        noisy_pesq = pesq_score(ref, noisy, sample_rate=16000)
+        assert noisy_pesq < clean_pesq - 0.3
+        clean_stoi = stoi_score(ref, ref.copy(), sample_rate=16000)
+        noisy_stoi = stoi_score(ref, noisy, sample_rate=16000)
+        assert noisy_stoi < clean_stoi - 0.05
+
+    def test_speech_quality_metrics_averaged(self):
+        pytest.importorskip("pesq")
+        pytest.importorskip("pystoi")
+        a = tone(300.0, 1.0, sr=16000)
+        b = tone(1500.0, 1.0, sr=16000)
+        m = speech_quality_metrics([a, b], [a.copy(), b.copy()], sample_rate=16000)
+        assert "pesq" in m and "stoi" in m
+        assert m["pesq"] > 4.0
+        assert m["stoi"] == pytest.approx(1.0, abs=0.02)
+
+    def test_speech_quality_fallback_without_libs(self, monkeypatch):
+        # simulate missing libs via monkeypatching import to raise
+        import benchmark.separation_metrics as mod
+
+        monkeypatch.setattr(mod, "_pesq_available", lambda: False)
+        monkeypatch.setattr(mod, "_stoi_available", lambda: False)
+        a = tone(300.0, 0.5, sr=16000)
+        m = speech_quality_metrics([a], [a.copy()], sample_rate=16000)
+        assert m == {}
+
+    def test_pesq_requires_16000_or_8000(self):
+        ref = tone(440.0, 0.5, sr=16000)
+        # wrapper documents wideband 16k only — ensure we either
+        # resample or raise clearly; T2 enforces 16k so 8k must raise
+        with pytest.raises((ValueError, RuntimeError)):
+            pesq_score(ref, ref.copy(), sample_rate=8000)

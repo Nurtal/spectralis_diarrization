@@ -15,7 +15,7 @@
 | Phase 0 — Project Infrastructure | M0 | ✅ Done (2026-08-25) |
 | Phase 1 — Dataset Generator | M1 | ✅ Done (2026-08-25) |
 | Phase 2 — Diarization Baseline | M2 | 🟨 In progress (metrics + VAD + pyannote adapter + viz done; real pyannote runs pending) |
-| Phase 3 — Classical Separation | M3 | 🟨 In progress (STFT/NMF + SI-SDR/BSS metrics done; PESQ/STOI pending) |
+| Phase 3 — Classical Separation | M3 | ✅ Done (STFT/NMF + SI-SDR/BSS + PESQ/STOI done) |
 | Phase 4 — Neural Separation | M4 | 🟨 In progress (SepFormer validated end-to-end on CPU; TF-GridNet + full matrix pending) |
 | Phase 5 — Hybrid Pipelines | M5 | 🟨 In progress (pipeline + e2e eval + first matrix cells done) |
 | Phase 6 — Speaker-Conditioned Separation | M6 | 🟨 In progress (encoder + enrollment + attribution comparison done; conditioned extraction model pending) |
@@ -159,7 +159,8 @@ signal processing alone goes, using the same metrics as everything else.
 - [x] SI-SDR evaluation against ground truth sources
 - [x] SDR / SIR / SAR evaluation
       — *simplified bss_eval decomposition without distortion filters*
-- [ ] PESQ / STOI where applicable
+- [x] PESQ / STOI where applicable
+      — ✅ `separation_metrics.pesq_score`/`stoi_score`/`speech_quality_metrics` (wideband 16 kHz, optional `quality` group, fallback when libs missing); wired into `evaluate_separation` + `evaluate_hybrid` and `analysis.TABLE_METRICS`
 - [x] Comparison table: NMF vs diarization-only baseline
       — *both runnable via `evaluate` CLI on identical manifests*
 
