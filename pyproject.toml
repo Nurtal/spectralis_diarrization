@@ -30,6 +30,10 @@ quality = [
 conditioned = [
     "asteroid>=0.6.0",
 ]
+asr = [
+    "openai-whisper>=20231117",
+    "jiwer>=3.0",
+]
 
 [build-system]
 requires = ["hatchling"]

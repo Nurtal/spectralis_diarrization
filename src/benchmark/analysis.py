@@ -4,7 +4,7 @@ from pathlib import Path
 
 from benchmark.results import read_results
 
-TABLE_METRICS = ("si_sdr", "sdr", "sir", "sar", "pesq", "stoi", "der", "jer")
+TABLE_METRICS = ("si_sdr", "sdr", "sir", "sar", "pesq", "stoi", "wer", "cer", "der", "jer")
 
 
 def aggregate(results_dir):
@@ -29,7 +29,7 @@ def benchmark_table(rows, metrics=TABLE_METRICS):
 
     header = (
         "| Model | "
-        + " | ".join(f"{m} " + ("↓" if m in ("der", "jer") else "↑") for m in metrics)
+        + " | ".join(f"{m} " + ("↓" if m in ("der", "jer", "wer", "cer") else "↑") for m in metrics)
         + " |"
     )
     separator = "|---" * (len(metrics) + 1) + "|"
@@ -85,6 +85,30 @@ def worst_k(rows, metric, k=5):
     return sorted(scored, key=lambda r: r[metric])[:k]
 
 
+def sdr_wer_correlation(rows):
+    """Pearson r between SI-SDR and WER (both present). Returns None if <2 points."""
+    pts = [
+        (r["si_sdr"], r["wer"])
+        for r in rows
+        if isinstance(r.get("si_sdr"), (int, float)) and isinstance(r.get("wer"), (int, float))
+    ]
+    if len(pts) < 2:
+        return None
+    try:
+        from scipy.stats import pearsonr
+
+        xs, ys = zip(*pts)
+        r, _ = pearsonr(xs, ys)
+        return float(r)
+    except Exception:
+        # fallback: manual Pearson
+        xs, ys = zip(*pts)
+        xm, ym = sum(xs) / len(xs), sum(ys) / len(ys)
+        num = sum((x - xm) * (y - ym) for x, y in pts)
+        den = (sum((x - xm) ** 2 for x in xs) * sum((y - ym) ** 2 for y in ys)) ** 0.5
+        return float(num / den) if den else None
+
+
 RQ_STATUS = {
     "RQ1": "diarization on simultaneous conversations — DER/JER per overlap config",
     "RQ2": "separation vs attribution improvement — hybrid vs diarization-only runs",
@@ -94,7 +118,7 @@ RQ_STATUS = {
     "RQ6": "degradation with speaker count — speaker-count sweep (pending)",
     "RQ7": "degradation with overlap ratio — overlap sweep (pending)",
     "RQ8": "noise/reverberation robustness — SNR/RIR sweeps (pending)",
-    "RQ9": "SI-SDR vs WER correlation — requires ASR evaluation (not implemented)",
+    "RQ9": "SI-SDR vs WER correlation — Whisper tiny (asr group) + jiwer, optional",
 }
 
 
@@ -125,6 +149,24 @@ def render_report(results_dir):
     lines += ["## Worst cases (SI-SDR)", "", "| Model | Experiment | SI-SDR |", "|---|---|---|"]
     for r in worst_k(rows, "si_sdr", k=5):
         lines.append(f"| {r['model']} | {r.get('experiment', '-')} | {r['si_sdr']:.2f} |")
+    lines.append("")
+
+    # RQ9: SI-SDR vs WER
+    corr = sdr_wer_correlation(rows)
+    lines += ["## SI-SDR vs WER (RQ9)", ""]
+    if corr is None:
+        lines.append(
+            "_Not enough WER data (need >=2 results with wer). Install asr group and re-evaluate._"
+        )
+    else:
+        lines.append(f"Pearson r (SI-SDR/WER) = **{corr:.2f}** (neg. expected).")
+        # small table of paired values
+        lines.append("")
+        lines.append("| Experiment | SI-SDR | WER |")
+        lines.append("|---|---|---|")
+        for r in sorted(rows, key=lambda x: x.get("si_sdr", 0)):
+            if isinstance(r.get("wer"), (int, float)) and isinstance(r.get("si_sdr"), (int, float)):
+                lines.append(f"| {r.get('experiment', '-')} | {r['si_sdr']:.2f} | {r['wer']:.3f} |")
     lines.append("")
 
     lines += ["## Research questions", ""]

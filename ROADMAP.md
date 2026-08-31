@@ -295,7 +295,9 @@ No new models — analysis only.
       — *plot functions ready (`plots.py`, optional matplotlib group `viz`);
         sweep data to be produced by matrix runs*
 - [x] Quality-vs-cost Pareto analysis (SI-SDR vs runtime)
-- [ ] SI-SDR ↔ WER correlation analysis (RQ9), if ASR evaluation was included
+- [x] SI-SDR ↔ WER correlation analysis (RQ9), if ASR evaluation was included
+      — ✅ `asr_metrics` (Whisper tiny + jiwer, `asr` group, fallback), `speech_recognition_metrics`
+        wired into `evaluate_*`, `TABLE_METRICS` wer/cer, `sdr_wer_correlation` + report section
 - [ ] Failure case catalog (worst-K mixtures per approach, with audio inspection notes)
       — *worst-K table done; audio inspection notes pending real corpora*
 - [ ] Written benchmark report summarizing findings per research question

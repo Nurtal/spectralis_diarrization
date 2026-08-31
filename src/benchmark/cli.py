@@ -138,6 +138,8 @@ def evaluate_hybrid(cfg):
     totals = {"si_sdr": 0.0, "sdr": 0.0, "sir": 0.0, "sar": 0.0}
     pesq_total = stoi_total = 0.0
     pesq_n = stoi_n = 0
+    wer_total = cer_total = 0.0
+    wer_n = cer_n = 0
     selective_total = full_total = 0.0
     n = 0
     for mixture in dataset:
@@ -181,6 +183,29 @@ def evaluate_hybrid(cfg):
                         pass
             except Exception:
                 pass
+            # optional ASR (WER/CER via Whisper, RQ9)
+            try:
+                from benchmark.asr_metrics import (
+                    _asr_available,
+                    _wer_available,
+                    cer_score,
+                    transcribe,
+                    wer_score,
+                )
+
+                if _asr_available() and _wer_available():
+                    est = result.tracks[spk]
+                    try:
+                        ref_text = transcribe(reference, int(sr))
+                        hyp_text = transcribe(est, int(sr))
+                        wer_total += wer_score(ref_text, hyp_text)
+                        wer_n += 1
+                        cer_total += cer_score(ref_text, hyp_text)
+                        cer_n += 1
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
         selective_total += result.selective_time
         full_total += result.full_time if result.full_time is not None else 0.0
@@ -191,6 +216,10 @@ def evaluate_hybrid(cfg):
         metrics["pesq"] = pesq_total / pesq_n
     if stoi_n:
         metrics["stoi"] = stoi_total / stoi_n
+    if wer_n:
+        metrics["wer"] = wer_total / wer_n
+    if cer_n:
+        metrics["cer"] = cer_total / cer_n
     metrics.update(
         selective_time_seconds=selective_total,
         full_time_seconds=full_total,
@@ -334,9 +363,10 @@ def cmd_visualize(args):
 
 
 def evaluate_separation(cfg):
-    """Run a registered separator over a manifest dataset and score SI-SDR/BSS + PESQ/STOI."""
+    """Run a registered separator over a manifest dataset and score SI-SDR/BSS + PESQ/STOI + WER."""
     import time
 
+    from benchmark.asr_metrics import speech_recognition_metrics
     from benchmark.datasets import ManifestDataset
     from benchmark.separation_metrics import (
         best_pairing_si_sdr,
@@ -377,11 +407,20 @@ def evaluate_separation(cfg):
                     q_counts[k] += 1
         except Exception:
             pass
+        # optional ASR (WER/CER via Whisper, RQ9)
+        try:
+            asr = speech_recognition_metrics(references, estimates, sample_rate=int(sr))
+            for k in ("wer", "cer"):
+                if k in asr:
+                    q_totals[k] = q_totals.get(k, 0.0) + asr[k]  # reuse dict for wer
+                    q_counts[k] = q_counts.get(k, 0) + 1
+        except Exception:
+            pass
         n += 1
 
     metrics = {k: v / n for k, v in totals.items()} if n else dict(totals)
-    for k in ("pesq", "stoi"):
-        if q_counts[k]:
+    for k in ("pesq", "stoi", "wer", "cer"):
+        if q_counts.get(k, 0):
             metrics[k] = q_totals[k] / q_counts[k]
     metrics.update(inference_time_seconds=inference_time, num_mixtures=n)
     return {
