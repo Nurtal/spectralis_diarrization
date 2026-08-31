@@ -4,9 +4,10 @@
 
 | Model | si_sdr ↑ | sdr ↑ | sir ↑ | sar ↑ | der ↓ | jer ↓ |
 |---|---|---|---|---|---|---|
-| hybrid | -1.57 | -1.57 | 74.40 | -1.57 | - | - |
-| nmf | -0.11 | -0.11 | 3.32 | 7.00 | - | - |
-| sepformer | 1.46 | 1.46 | 26.03 | 1.59 | - | - |
+| hybrid | -2.25 | -2.25 | 71.12 | -2.25 | - | - |
+| nmf | -0.10 | -0.10 | 3.41 | 6.95 | - | - |
+| pyannote_real | - | - | - | - | 0.12 | 0.18 |
+| sepformer | 1.51 | 1.51 | 25.97 | 1.64 | - | - |
 
 ## Quality / cost Pareto (SI-SDR vs runtime)
 
@@ -16,11 +17,11 @@ _No runtime data recorded yet._
 
 | Model | Experiment | SI-SDR |
 |---|---|---|
+| hybrid | hybrid_oracle_sepformer_spectral_ovl00 | -11.89 |
+| hybrid | hybrid_oracle_sepformer_embedding_ovl25 | -7.71 |
 | hybrid | hybrid_spectral_ovl75 | -6.16 |
-| hybrid | hybrid_embedding_ovl00 | -2.06 |
-| hybrid | hybrid_embedding_ovl25 | -1.78 |
-| hybrid | hybrid_embedding_ovl75 | -1.59 |
-| hybrid | hybrid_embedding_ovl50 | -0.99 |
+| hybrid | hybrid_spectral_ovl75 | -6.16 |
+| hybrid | hybrid_oracle_sepformer_embedding_ovl00 | -4.94 |
 
 ## Research questions
 

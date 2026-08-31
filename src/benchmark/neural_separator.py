@@ -48,12 +48,15 @@ class SpeechBrainSeparator(Separator):
 
         savedir = tempfile.mkdtemp(prefix="spectralis-model-")
         if hf_token:
-            # speechbrain/huggingface_hub pick the token up from the environment
             os.environ.setdefault("HF_TOKEN", hf_token)
+        # Force CPU on hosts with old CUDA driver (12090); explicit device
+        # override keeps SpeechBrain from probing CUDA.
+        if device == "cpu":
+            os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
         self._model = SepformerSeparation.from_hparams(
             source=model_id,
             savedir=savedir,
-            overrides={"device": device} if device != "cpu" else None,
+            run_opts={"device": device},
         )
         self.model_sample_rate = int(model_sample_rate)
 

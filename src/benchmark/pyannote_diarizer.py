@@ -41,9 +41,11 @@ class PyannoteDiarizer(Diarizer):
         audio = self._validate_audio(audio, sample_rate)
         waveform = torch.from_numpy(np.asarray(audio)).float().unsqueeze(0)
         annotation = self._pipeline({"waveform": waveform, "sample_rate": int(sample_rate)})
+        # pyannote 4.x returns DiarizeOutput with speaker_diarization attribute
+        diarization = getattr(annotation, "speaker_diarization", annotation)
         return [
             Segment(start=turn.start, end=turn.end, speaker=speaker)
-            for turn, _, speaker in annotation.itertracks(yield_label=True)
+            for turn, _, speaker in diarization.itertracks(yield_label=True)
         ]
 
 

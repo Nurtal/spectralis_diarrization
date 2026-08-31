@@ -18,10 +18,10 @@ _No runtime data recorded yet._
 | Model | Experiment | SI-SDR |
 |---|---|---|
 | hybrid | hybrid_3spk_ovl50_10db | -13.67 |
+| hybrid | hybrid_3spk_ovl50_10db | -13.67 |
+| hybrid | hybrid_3spk_ovl50_clean | -8.23 |
 | hybrid | hybrid_3spk_ovl50_clean | -8.23 |
 | nmf | nmf_3spk_ovl50_clean | -4.97 |
-| hybrid | hybrid_3spk_ovl00_10db | -4.90 |
-| hybrid | hybrid_3spk_ovl00_clean | -4.63 |
 
 ## Research questions
 

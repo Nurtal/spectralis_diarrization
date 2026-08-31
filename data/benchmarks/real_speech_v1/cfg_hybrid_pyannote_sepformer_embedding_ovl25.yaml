@@ -1,0 +1,11 @@
+name: hybrid_pyannote_sepformer_embedding_ovl25
+seed: 0
+model:
+  name: hybrid
+  params:
+      diarizer: "pyannote_real"
+      separator: "sepformer"
+      attribution: "embedding"
+      encoder: "ecapa"
+dataset:
+  manifest: data/benchmarks/real_speech_v1/ovl25/manifest.json

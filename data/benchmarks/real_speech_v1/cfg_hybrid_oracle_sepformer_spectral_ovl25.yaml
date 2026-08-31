@@ -1,0 +1,10 @@
+name: hybrid_oracle_sepformer_spectral_ovl25
+seed: 0
+model:
+  name: hybrid
+  params:
+      diarizer: "oracle"
+      separator: "sepformer"
+      attribution: "spectral"
+dataset:
+  manifest: data/benchmarks/real_speech_v1/ovl25/manifest.json
