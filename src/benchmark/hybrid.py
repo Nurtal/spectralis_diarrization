@@ -73,7 +73,6 @@ class HybridPipeline:
         segments = self.diarizer.diarize(audio, sample_rate)
 
         overlap_regions = self._overlap_regions(segments)
-        output = audio.copy()
         tracks = {spk: np.zeros_like(audio) for spk in {s.speaker for s in segments}}
         assignments = {}
         selective_time = 0.0
@@ -108,15 +107,17 @@ class HybridPipeline:
             )
             assignments[(round(start, 3), round(end, 3))] = {i: spk for i, spk in mapping.items()}
 
-            combined = np.zeros(i1 - i0, dtype=np.float32)
-            # attribute into per-speaker tracks only over the true overlap
-            # span (padding exists for separation context, not for assembly)
             j0 = max(i0, int(start * sample_rate))
             j1 = min(i1, int(end * sample_rate))
+            combined = np.zeros(i1 - i0, dtype=np.float32)
             for src_idx, spk in mapping.items():
                 tracks[spk][j0:j1] += sources[src_idx][j0 - i0 : j1 - i0]
                 combined += sources[src_idx]
-            self._blend(output, combined, i0, i1, sample_rate)
+
+        # Construct output from per-speaker tracks: sum all tracks to mix down
+        output = np.sum(list(tracks.values()), axis=0).astype(np.float32)
+        # Clip to valid float range
+        output = np.clip(output, -1.0, 1.0)
 
         full_time = None
         if compare_full:
